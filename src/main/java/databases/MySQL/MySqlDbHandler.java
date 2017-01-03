@@ -106,8 +106,13 @@ public class MySqlDbHandler implements IDbHandler {
 		// JDBC driver name and database URL
 		final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 		// final String DB_URL = "jdbc:mysql://localhost/ADE";
-		final String DB_URL = "jdbc:mysql://" + host + "/" + db;
+		String DB_URL = "jdbc:mysql://" + host + ":" + port + "/" + db;
 
+		if (pass.compareTo("\"\"") == 0) {
+			pass = null;
+		}
+
+		System.out.println(DB_URL);
 		// STEP 2: Register JDBC driver
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
