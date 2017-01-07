@@ -20,17 +20,25 @@ public class main {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		readProperties();
-		Application app = new Application("app1", "sdfsd");
-		Sensor sensor = new Sensor(app.getAppId(), "sensor1", "desc");
+		Application app = new Application(null, "app1", "sdfsd");
+		Sensor sensor = new Sensor(app.getAppId(), null, "sensor1", "desc");
 		MySqlDbHandler db = new MySqlDbHandler();
 		db.connectToDb(host, port, dbname, user, password);
 		db.createApp(app);
 		db.createSensor(sensor);
-		Metric metric = new Metric(app.getAppId(), sensor.getSensorId(), "typeOfData", "C", null, 0);
+		Metric metric = new Metric(app.getAppId(), sensor.getSensorId(), null, "typeOfData", "C", null, 0);
 		db.createMunit(metric);
 		metric.setValue("150");
 		metric.setTimestamp(1561564562);
 		db.insertMetric(metric);
+
+		app = db.getApp(app.getAppId());
+		sensor = db.getSensor(sensor.getSensorId());
+		metric = db.getMunit(metric.getSensorId(), metric.getmUnit());
+		metric = db.getMetric(metric.getMetricId());
+
+		System.out.println(app.getAppId() + " " + app.getName());
+		System.out.println(sensor.getAppId() + " " + sensor.getSensorId());
 
 	}
 

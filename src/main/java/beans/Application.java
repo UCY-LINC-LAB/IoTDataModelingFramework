@@ -9,10 +9,13 @@ public class Application implements IApplication {
 	private String appName;
 	private String appDesc;
 
-	public Application(String name, String desc) {
+	public Application(String appId, String name, String desc) {
 		this.appName = name;
 		this.appDesc = desc;
-		this.appId = generateUuid();
+		if (appId == null || appId.compareTo("") == 0)
+			this.appId = generateUuid();
+		else
+			this.appId = appId;
 	}
 
 	public String getName() {

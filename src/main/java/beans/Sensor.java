@@ -10,12 +10,15 @@ public class Sensor implements ISensor {
 	private String sensorName;
 	private String sensorDesc;
 
-	public Sensor(String appId, String sensorName, String sensorDesc) {
+	public Sensor(String appId, String sensorId, String sensorName, String sensorDesc) {
 		this.appId = appId;
 		this.sensorName = sensorName;
 		this.sensorDesc = sensorDesc;
-		sensorId = generateUuid();
-
+		if (sensorId == null || sensorId.compareTo("") == 0) {
+			this.sensorId = generateUuid();
+		} else {
+			this.sensorId = sensorId;
+		}
 	}
 
 	public String getAppId() {

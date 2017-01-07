@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import Interface.IDbHandler;
 import beans.Application;
 import beans.Metric;
@@ -23,8 +24,12 @@ public class MySqlDbHandler implements IDbHandler {
 			+ " sensorDescription) VALUES (?, ?, ?, ?)";
 	private static final String CREATE_M_UNIT = "INSERT INTO MeasurementUnits (" + " appId," + " sensorId, "
 			+ " typeOfData," + " mUnit) VALUES (?, ?, ?, ?)";
-	private static final String INSERT_METRIC = "INSERT INTO Measurements (" + " metricId," + " value, "
+	private static final String INSERT_METRIC = "INSERT INTO Metrics (" + " metricId," + " value, "
 			+ "timestamp) VALUES (?, ?, ?)";
+	private static final String GET_APP = "SELECT * FROM Applications WHERE appId = ?";
+	private static final String GET_SENSOR = "SELECT * FROM Sensors WHERE sensorId = ?";
+	private static final String GET_M_UNIT = "SELECT * FROM MeasurementUnits WHERE sensorId = ? AND mUnit = ?";
+	private static final String GET_METRIC = "SELECT * FROM Metrics WHERE metricId = ?";
 
 	public MySqlDbHandler() {
 
@@ -46,6 +51,22 @@ public class MySqlDbHandler implements IDbHandler {
 
 	public Application getApp(String appId) {
 		Application app = null;
+		try {
+			PreparedStatement stmt = conn.prepareStatement(GET_APP);
+			stmt.setString(1, appId);
+
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				appId = rs.getString("appId");
+				String appName = rs.getString("appName");
+				String appDescription = rs.getString("appDescription");
+				app = new Application(appId, appName, appDescription);
+				return app;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return app;
 	}
 
@@ -64,6 +85,27 @@ public class MySqlDbHandler implements IDbHandler {
 		}
 	}
 
+	public Sensor getSensor(String sensorId) {
+		Sensor sensor = null;
+		try {
+			PreparedStatement stmt = conn.prepareStatement(GET_SENSOR);
+			stmt.setString(1, sensorId);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				String appId = rs.getString("appId");
+				sensorId = rs.getString("sensorId");
+				String sensorName = rs.getString("sensorName");
+				String sensorDescription = rs.getString("sensorDescription");
+				sensor = new Sensor(appId, sensorId, sensorName, sensorDescription);
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return sensor;
+	}
+
 	public void createMunit(Metric munit) {
 		PreparedStatement stmt;
 		try {
@@ -78,11 +120,33 @@ public class MySqlDbHandler implements IDbHandler {
 		}
 	}
 
+	public Metric getMunit(String sensorId, String mUnit) {
+		Metric metric = null;
+		try {
+			PreparedStatement stmt = conn.prepareStatement(GET_M_UNIT);
+			stmt.setString(1, sensorId);
+			stmt.setString(2, mUnit);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				String appId = rs.getString("appId");
+				sensorId = rs.getString("sensorId");
+				String typeOfData = rs.getString("typeOfData");
+				mUnit = rs.getString("mUnit");
+				metric = new Metric(appId, sensorId, null, typeOfData, mUnit, null, -1);
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return metric;
+	}
+
 	public void insertMetric(Metric data) {
 		PreparedStatement stmt;
 		try {
 			stmt = conn.prepareStatement(INSERT_METRIC);
-			stmt.setString(1, data.getSensorId() + "$" + data.getmUnit());
+			stmt.setString(1, data.getMetricId());
 			stmt.setString(2, data.getValue());
 			stmt.setLong(3, data.getTimestamp());
 			stmt.executeUpdate();
@@ -90,6 +154,26 @@ public class MySqlDbHandler implements IDbHandler {
 			e.printStackTrace();
 		}
 
+	}
+
+	public Metric getMetric(String metricId) {
+		Metric metric = null;
+		try {
+			PreparedStatement stmt = conn.prepareStatement(GET_METRIC);
+			stmt.setString(1, metricId);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				metricId = rs.getString("metricId");
+				String value = rs.getString("value");
+				long timestamp = rs.getLong("timestamp");
+				metric = new Metric(null, null, metricId, null, null, value, timestamp);
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return metric;
 	}
 
 	public void execStmnt(String stmt) {
