@@ -57,4 +57,34 @@ public class CassandraDbHandler implements IDbHandler {
 		
 	}
 
+	public Application getApp(String appId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Sensor getSensor(String sensorId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Metric getMunit(String sensorId, String mUnit) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Metric getMetric(String metricId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean deleteRow(String table, String pkName, String id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean updateField(String table, String pkName, String id, String fieldName, String newValue) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

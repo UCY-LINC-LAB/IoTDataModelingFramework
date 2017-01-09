@@ -12,10 +12,18 @@ public class Application implements IApplication {
 	public Application(String appId, String name, String desc) {
 		this.appName = name;
 		this.appDesc = desc;
-		if (appId == null || appId.compareTo("") == 0)
+		if (appId == null) {
 			this.appId = generateUuid();
-		else
-			this.appId = appId;
+		} else {
+			try {
+				UUID uuid = UUID.fromString(appId);
+				this.appId = uuid.toString();
+				// do something
+			} catch (IllegalArgumentException exception) {
+				// handle the case where string is not valid UUID
+				this.appId = generateUuid();
+			}
+		}
 	}
 
 	public String getName() {
@@ -39,7 +47,7 @@ public class Application implements IApplication {
 	}
 
 	private static String generateUuid() {
-		return UUID.randomUUID().toString().replaceAll("-", "");
+		return UUID.randomUUID().toString();
 	}
 
 }

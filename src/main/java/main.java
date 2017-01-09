@@ -37,6 +37,8 @@ public class main {
 		metric = db.getMunit(metric.getSensorId(), metric.getmUnit());
 		metric = db.getMetric(metric.getMetricId());
 
+		System.out.println(db.deleteRow("Metrics", "metricId", metric.getMetricId()));
+		System.out.println(db.updateField("Metrics", "metricId", metric.getMetricId(), "value", "5000000wgre"));
 		System.out.println(app.getAppId() + " " + app.getName());
 		System.out.println(sensor.getAppId() + " " + sensor.getSensorId());
 

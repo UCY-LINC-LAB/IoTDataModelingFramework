@@ -44,6 +44,7 @@ public class MySqlDbHandler implements IDbHandler {
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
+			// e.printStackTrace();
 			e.printStackTrace();
 		}
 
@@ -174,6 +175,31 @@ public class MySqlDbHandler implements IDbHandler {
 			e.printStackTrace();
 		}
 		return metric;
+	}
+
+	public boolean deleteRow(String table, String pkName, String id) {
+		String delete = "DELETE FROM " + table + " WHERE " + pkName + " = '" + id + "';";
+		try {
+			stmt.executeUpdate(delete);
+			return true;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public boolean updateField(String table, String pkName, String id, String fieldName, String newValue) {
+		String update = "UPDATE " + table + " SET " + fieldName + " = '" + newValue + "' WHERE " + pkName + " = '" + id
+				+ "';";
+		try {
+			stmt.executeUpdate(update);
+			return true;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	public void execStmnt(String stmt) {

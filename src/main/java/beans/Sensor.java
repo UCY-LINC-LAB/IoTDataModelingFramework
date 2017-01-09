@@ -14,10 +14,17 @@ public class Sensor implements ISensor {
 		this.appId = appId;
 		this.sensorName = sensorName;
 		this.sensorDesc = sensorDesc;
-		if (sensorId == null || sensorId.compareTo("") == 0) {
+		if (sensorId == null) {
 			this.sensorId = generateUuid();
 		} else {
-			this.sensorId = sensorId;
+			try {
+				UUID uuid = UUID.fromString(sensorId);
+				this.sensorId = uuid.toString();
+				// do something
+			} catch (IllegalArgumentException exception) {
+				// handle the case where string is not valid UUID
+				this.sensorId = generateUuid();
+			}
 		}
 	}
 
@@ -50,7 +57,7 @@ public class Sensor implements ISensor {
 	}
 
 	private static String generateUuid() {
-		String uuid = UUID.randomUUID().toString().replaceAll("-", "");
+		String uuid = UUID.randomUUID().toString();
 		return uuid;
 	}
 
