@@ -1,5 +1,9 @@
 package databases.MySQL;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -18,6 +22,12 @@ public class MySqlDbHandler implements IDbHandler {
 	private static Statement stmt = null;
 	private static ResultSet rs = null;
 
+	private static String host;
+	private static String dbname;
+	private static String port;
+	private static String user;
+	private static String password;
+
 	private static final String CREATE_APP = "INSERT INTO Applications (" + " appId," + " appName,"
 			+ " appDescription) VALUES (?, ?, ?)";
 	private static final String CREATE_SENSOR = "INSERT INTO Sensors (" + " appId," + " sensorId, " + " sensorName,"
@@ -32,7 +42,8 @@ public class MySqlDbHandler implements IDbHandler {
 	private static final String GET_METRIC = "SELECT * FROM Metrics WHERE metricId = ?";
 
 	public MySqlDbHandler() {
-
+		readProperties();
+		connectToDb(host, port, dbname, user, password);
 	}
 
 	public void createApp(Application app) {
@@ -262,6 +273,42 @@ public class MySqlDbHandler implements IDbHandler {
 			return true;
 		}
 		return false;
+	}
+
+	public static void readProperties() {
+		try {
+			@SuppressWarnings("resource")
+			BufferedReader bf = new BufferedReader(new FileReader("src/main/resources/iot.properties"));
+			String line = null;
+			while ((line = bf.readLine()) != null) {
+				String[] parts = line.split("=");
+				if (parts[1] == null) {
+					System.out.println("Missing properties!");
+				} else {
+					if (parts[0].compareTo("db.host") == 0) {
+						host = parts[1];
+					} else if (parts[0].compareTo("db.user") == 0) {
+						user = parts[1];
+					} else if (parts[0].compareTo("db.password") == 0) {
+						password = parts[1];
+					} else if (parts[0].compareTo("db.port") == 0) {
+						port = parts[1];
+					} else if (parts[0].compareTo("db.name") == 0) {
+						dbname = parts[1];
+					} else {
+						System.out.println("Wrong properties!");
+					}
+
+				}
+			}
+
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

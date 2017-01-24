@@ -1,9 +1,3 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-
 import beans.Application;
 import beans.Metric;
 import beans.Sensor;
@@ -11,72 +5,88 @@ import databases.MySQL.MySqlDbHandler;
 
 public class main {
 
-	private static String host;
-	private static String dbname;
-	private static String port;
-	private static String user;
-	private static String password;
+	private static MySqlDbHandler db = new MySqlDbHandler();;
+	
+	private final static int appNum = 1;
+	private final static int sensorNum = 1;
+	private final static int mUnitsNum = 1;
+	private static int streamNum = 3;
+
+	private static Application apps[] = new Application[appNum];
+	private static Sensor sensors[][] = new Sensor[appNum][sensorNum];
+	private static Metric metrics[][][] = new Metric[appNum][sensorNum][mUnitsNum];
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		readProperties();
-		Application app = new Application(null, "app1", "sdfsd");
-		Sensor sensor = new Sensor(app.getAppId(), null, "sensor1", "desc");
-		MySqlDbHandler db = new MySqlDbHandler();
-		db.connectToDb(host, port, dbname, user, password);
-		db.createApp(app);
-		db.createSensor(sensor);
-		Metric metric = new Metric(app.getAppId(), sensor.getSensorId(), null, "typeOfData", "C", null, 0);
-		db.createMunit(metric);
-		metric.setValue("150");
-		metric.setTimestamp(1561564562);
-		db.insertMetric(metric);
-
-		app = db.getApp(app.getAppId());
-		sensor = db.getSensor(sensor.getSensorId());
-		metric = db.getMunit(metric.getSensorId(), metric.getmUnit());
-		metric = db.getMetric(metric.getMetricId());
-
-		System.out.println(db.deleteRow("Metrics", "metricId", metric.getMetricId()));
-		System.out.println(db.updateField("Metrics", "metricId", metric.getMetricId(), "value", "5000000wgre"));
-		System.out.println(app.getAppId() + " " + app.getName());
-		System.out.println(sensor.getAppId() + " " + sensor.getSensorId());
+		createDb();
+		System.out.println("Streaming data...");
+		streamData();
 
 	}
 
-	public static void readProperties() {
-		try {
-			BufferedReader bf = new BufferedReader(new FileReader("src/main/resources/iot.properties"));
-			String line = null;
-			while ((line = bf.readLine()) != null) {
-				String[] parts = line.split("=");
-				if (parts[1] == null) {
-					System.out.println("Missing properties!");
-				} else {
-					if (parts[0].compareTo("db.host") == 0) {
-						host = parts[1];
-					} else if (parts[0].compareTo("db.user") == 0) {
-						user = parts[1];
-					} else if (parts[0].compareTo("db.password") == 0) {
-						password = parts[1];
-					} else if (parts[0].compareTo("db.port") == 0) {
-						port = parts[1];
-					} else if (parts[0].compareTo("db.name") == 0) {
-						dbname = parts[1];
-					} else {
-						System.out.println("Wrong properties!");
-					}
-
+	/**
+	 * Creates Application and sensors
+	 */
+	public static void createDb() {
+		for (int i = 0; i < appNum; i++) {
+			String appName = "app" + (i + 1);
+			apps[i] = new Application(null, appName, "desc");
+			db.createApp(apps[i]);
+			for (int j = 0; j < sensorNum; j++) {
+				String sensorName = appName + "_sensor" + (j + 1);
+				sensors[i][j] = new Sensor(apps[i].getAppId(), null, sensorName, "desc");
+				db.createSensor(sensors[i][j]);
+				for (int k = 0; k < mUnitsNum; k++) {
+					String mUnit = generateString((int) (Math.random() * (20 - 1) + 1));
+					// System.out.println(appName + " " + sensorName + " " +
+					// mUnit);
+					metrics[i][j][k] = new Metric(apps[i].getAppId(), sensors[i][j].getSensorId(), null, "Type of Data",
+							mUnit, null, 0);
+					db.createMunit(metrics[i][j][k]);
 				}
 			}
-
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+	}
+
+	public static void streamData() {
+		for (int i = 0; i < appNum; i++) {
+			for (int j = 0; j < sensorNum; j++) {
+				for (int k = 0; k < mUnitsNum; k++) {
+					final int appPos = i;
+					final int sensorPos = j;
+					final int metricPos = k;
+					new Thread() {
+						public void run() {
+							int counter = 0;
+							while (counter < streamNum || streamNum == 0) {
+								int time = 1000;
+								try {
+									Thread.sleep(time);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								long unixTime = System.currentTimeMillis() / 1000L;
+								metrics[appPos][sensorPos][metricPos].setTimestamp(unixTime);
+								String value = generateString((int) (Math.random() * (20 - 1) + 1));
+								metrics[appPos][sensorPos][metricPos].setValue(value);
+								db.insertMetric(metrics[appPos][sensorPos][metricPos]);
+								counter++;
+							}
+
+						}
+					}.start();
+				}
+			}
+		}
+	}
+
+	public static String generateString(int length) {
+		char[] text = new char[length];
+		for (int i = 0; i < length; i++) {
+			text[i] = (char) (Math.random() * (122 - 97 + 1) + 97);
+		}
+		return new String(text);
 	}
 
 }

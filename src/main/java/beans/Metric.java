@@ -81,5 +81,4 @@ public class Metric implements IMetric {
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
-
 }
