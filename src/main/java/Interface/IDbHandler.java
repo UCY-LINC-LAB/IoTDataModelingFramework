@@ -1,37 +1,52 @@
 package Interface;
 
+import java.util.ArrayList;
+
 import beans.Application;
 import beans.Metric;
 import beans.Sensor;
 
 public interface IDbHandler {
 
-	public void createApp(Application app);
+	public boolean createApp(Application app);
 
 	public Application getApp(String appId);
 
-	public void createSensor(Sensor sensor);
+	public ArrayList<Application> getApps();
+
+	public boolean createSensor(Sensor sensor);
 
 	public Sensor getSensor(String sensorId);
 
-	public void createMunit(Metric munit);
+	public ArrayList<Sensor> getSensors();
 
-	public Metric getMunit(String sensorId, String mUnit);
+	public boolean createMetric(Metric metric);
 
-	public void insertMetric(Metric data);
+	public ArrayList<Metric> getMetrics(String sensorId);
 
-	public Metric getMetric(String metricId);
+	public boolean insertMeasurement(Metric data);
+
+	public boolean insertMeasurements(ArrayList<Metric> metric);
+
+	public ArrayList<Metric> getMeasurementsMetricFromTo(Metric m, long date1, long date2);
 
 	public boolean deleteRow(String table, String pkName, String id);
 
 	public boolean updateField(String table, String pkName, String id, String fieldName, String newValue);
 
-	public void execStmnt(String stmt);
+	public boolean execStmnt(String query);
 
 	public void connectToDb(String host, String port, String db, String user, String pass);
 
-	public void closeConnection();
+	public boolean closeConnection();
 
 	public boolean status();
 
+	public void readProperties();
+
+	public String appToJson(Application app);
+
+	public String sensorToJson(Sensor sensor);
+
+	public String metricToJson(Metric metric);
 }

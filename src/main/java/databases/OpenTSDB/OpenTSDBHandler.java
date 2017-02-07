@@ -1,5 +1,7 @@
 package databases.OpenTSDB;
 
+import java.util.ArrayList;
+
 import Interface.IDbHandler;
 import beans.Application;
 import beans.Metric;
@@ -7,54 +9,9 @@ import beans.Sensor;
 
 public class OpenTSDBHandler implements IDbHandler {
 
-	public boolean status() {
+	public boolean createApp(Application app) {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	public void closeConnection() {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void insert(String insertStmt) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void delete(String query) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void connectToDb(String host, String port, String db, String user, String pass) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void createApp(Application app) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void createSensor(Sensor sensor) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void createMunit(Metric munit) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void insertMetric(Metric data) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void execStmnt(String stmt) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	public Application getApp(String appId) {
@@ -62,17 +19,47 @@ public class OpenTSDBHandler implements IDbHandler {
 		return null;
 	}
 
+	public ArrayList<Application> getApps() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean createSensor(Sensor sensor) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	public Sensor getSensor(String sensorId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public Metric getMunit(String sensorId, String mUnit) {
+	public ArrayList<Sensor> getSensors() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public Metric getMetric(String metricId) {
+	public boolean createMetric(Metric metric) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public ArrayList<Metric> getMetrics(String sensorId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean insertMeasurement(Metric data) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean insertMeasurements(ArrayList<Metric> metric) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public ArrayList<Metric> getMeasurementsMetricFromTo(Metric m, long date1, long date2) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -85,6 +72,46 @@ public class OpenTSDBHandler implements IDbHandler {
 	public boolean updateField(String table, String pkName, String id, String fieldName, String newValue) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public boolean execStmnt(String query) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void connectToDb(String host, String port, String db, String user, String pass) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public boolean closeConnection() {
+		return false;
+		// TODO Auto-generated method stub
+	}
+
+	public boolean status() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void readProperties() {
+		// TODO Auto-generated method stub
+
+	}
+
+	public String appToJson(Application app) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String sensorToJson(Sensor sensor) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String metricToJson(Metric metric) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

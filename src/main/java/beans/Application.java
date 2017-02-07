@@ -26,6 +26,16 @@ public class Application implements IApplication {
 		}
 	}
 
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("************************************");
+		sb.append("\nappId: ").append(this.appId);
+		sb.append("\nappName: ").append(this.appName);
+		sb.append("\nappDesc: ").append(this.appDesc);
+		sb.append("\n************************************");
+		return sb.toString();
+	}
+
 	public String getName() {
 		return appName;
 	}
