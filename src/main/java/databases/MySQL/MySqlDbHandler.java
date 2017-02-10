@@ -279,15 +279,15 @@ public class MySqlDbHandler implements IDbHandler {
 		return false;
 	}
 
-	public ArrayList<Metric> getMeasurementsMetricFromTo(Metric m, long date1, long date2) {
+	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2) {
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
 		try {
 			getMeasurements.setLong(1, date1);
 			getMeasurements.setLong(2, date2);
-			getMeasurements.setString(3, m.getMetricId());
+			getMeasurements.setString(3, metricId);
 			ResultSet rs = getMeasurements.executeQuery();
 			while (rs.next()) {
-				String metricId = rs.getString("metricId");
+				metricId = rs.getString("metricId");
 				String value = rs.getString("value");
 				long timestamp = rs.getLong("timestamp");
 				Metric metric = new Metric(null, null, metricId, null, null, value, timestamp);
@@ -353,13 +353,14 @@ public class MySqlDbHandler implements IDbHandler {
 		}
 
 		System.out.println(DB_URL);
-		System.out.println(user);
-		System.out.println(pass);
+		// System.out.println(user);
+		// System.out.println(pass);
 
 		// STEP 2: Register JDBC driver
 		try {
 			Class.forName(JDBC_DRIVER);
 			System.out.println("Connecting to a selected database...");
+			DriverManager.setLoginTimeout(5);
 			conn = DriverManager.getConnection(DB_URL, user, pass);
 			System.out.println("Connected database successfully...");
 			stmt = conn.createStatement();

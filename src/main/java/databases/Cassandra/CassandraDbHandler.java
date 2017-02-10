@@ -190,14 +190,14 @@ public class CassandraDbHandler implements IDbHandler {
 		return true;
 	}
 
-	public ArrayList<Metric> getMeasurementsMetricFromTo(Metric m, long date1, long date2) {
+	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2) {
 		// TODO Auto-generated method stub
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
 		BoundStatement bound;
 		if (date1 > date2)
-			bound = getMeasurements.bind(m, date1, date2);
+			bound = getMeasurements.bind(metricId, date1, date2);
 		else
-			bound = getMeasurements.bind(m, date2, date1);
+			bound = getMeasurements.bind(metricId, date2, date1);
 
 		ResultSet rs = session.execute(bound);
 		while (!rs.isExhausted()) {

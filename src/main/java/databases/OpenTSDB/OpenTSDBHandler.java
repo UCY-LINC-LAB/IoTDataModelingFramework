@@ -59,7 +59,7 @@ public class OpenTSDBHandler implements IDbHandler {
 		return false;
 	}
 
-	public ArrayList<Metric> getMeasurementsMetricFromTo(Metric m, long date1, long date2) {
+	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -28,19 +28,11 @@ public interface IDbHandler {
 
 	public boolean insertMeasurements(ArrayList<Metric> metric);
 
-	public ArrayList<Metric> getMeasurementsMetricFromTo(Metric m, long date1, long date2);
-
-	public boolean deleteRow(String table, String pkName, String id);
-
-	public boolean updateField(String table, String pkName, String id, String fieldName, String newValue);
-
-	public boolean execStmnt(String query);
+	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2);
 
 	public void connectToDb(String host, String port, String db, String user, String pass);
 
 	public boolean closeConnection();
-
-	public boolean status();
 
 	public void readProperties();
 

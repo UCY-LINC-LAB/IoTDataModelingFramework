@@ -4,17 +4,19 @@ import beans.Application;
 import beans.Metric;
 import beans.Sensor;
 import databases.Cassandra.CassandraDbHandler;
+import databases.MongoDB.MongoDbHandler;
 import databases.MySQL.MySqlDbHandler;
 
 public class main {
 
 	// private static MySqlDbHandler db = new MySqlDbHandler();
-	private static CassandraDbHandler db = new CassandraDbHandler();
+	// private static CassandraDbHandler db = new CassandraDbHandler();
+	private static MongoDbHandler db = new MongoDbHandler();
 
-	private final static int appNum = 5;
-	private final static int sensorNum = 5;
+	private final static int appNum = 2;
+	private final static int sensorNum = 2;
 	private final static int mUnitsNum = 2;
-	private static int streamNum = 3;
+	private static int streamNum = 2;
 
 	private static Application apps[] = new Application[appNum];
 	private static Sensor sensors[][] = new Sensor[appNum][sensorNum];
@@ -23,9 +25,9 @@ public class main {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
-		// createDb();
-		// System.out.println("Streaming data...");
-		// streamData();
+		createDb();
+		System.out.println("Streaming data...");
+		streamData();
 
 		Application app = new Application(null, "sdfsd", "wrgr");
 		db.createApp(app);
@@ -34,7 +36,7 @@ public class main {
 		long unixTime = System.currentTimeMillis() / 1000L;
 		Metric metric1 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime);
 		unixTime = System.currentTimeMillis() / 1000L;
-		Metric metric2 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime+1);
+		Metric metric2 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime + 1);
 
 		db.createMetric(metric1);
 		db.createMetric(metric2);
@@ -42,11 +44,11 @@ public class main {
 		metrics.add(metric1);
 		metrics.add(metric2);
 		db.insertMeasurements(metrics);
-
-		// db.getApps();
-		// db.getSensors();
-		// db.getApp(app.getAppId());
-		// db.getSensor(sensor.getSensorId());
+		db.getApps();
+		db.getSensors();
+		db.getApp(app.getAppId());
+		db.getSensor(sensor.getSensorId());
+		db.getMeasurementsMetricFromTo(metric1.getMetricId(), 1486735488, 1486735491);
 
 	}
 
@@ -95,6 +97,7 @@ public class main {
 								long unixTime = System.currentTimeMillis() / 1000L;
 								metrics[appPos][sensorPos][metricPos].setTimestamp(unixTime);
 								String value = generateString((int) (Math.random() * (20 - 1) + 1));
+								value = String.valueOf(counter + 1);
 								metrics[appPos][sensorPos][metricPos].setValue(value);
 								db.insertMeasurement(metrics[appPos][sensorPos][metricPos]);
 								counter++;
