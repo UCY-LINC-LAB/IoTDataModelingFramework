@@ -15,14 +15,15 @@ public class Application implements IApplication {
 		if (appId == null) {
 			this.appId = generateUuid();
 		} else {
-			try {
-				UUID uuid = UUID.fromString(appId);
-				this.appId = uuid.toString();
-				// do something
-			} catch (IllegalArgumentException exception) {
-				// handle the case where string is not valid UUID
-				this.appId = generateUuid();
-			}
+			// try {
+			// UUID uuid = UUID.fromString(appId);
+			// this.appId = uuid.toString();
+			// // do something
+			// } catch (IllegalArgumentException exception) {
+			// // handle the case where string is not valid UUID
+			// this.appId = generateUuid();
+			// }
+			this.appId = appId;
 		}
 	}
 
@@ -57,7 +58,7 @@ public class Application implements IApplication {
 	}
 
 	private static String generateUuid() {
-		return UUID.randomUUID().toString();
+		return UUID.randomUUID().toString().replaceAll("-", "");
 	}
 
 }

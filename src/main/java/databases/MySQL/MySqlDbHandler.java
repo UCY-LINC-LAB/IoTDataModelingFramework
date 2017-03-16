@@ -54,16 +54,17 @@ public class MySqlDbHandler implements IDbHandler {
 	private static PreparedStatement getApp;
 	private static final String GET_SENSOR = "SELECT * FROM Sensors WHERE sensorId = ?;";
 	private static PreparedStatement getSensor;
-	private static final String GET_SENSORS = "SELECT * FROM Sensors;";
+	private static final String GET_SENSORS = "SELECT * FROM Sensors WHERE appId = ?;";
 	private static PreparedStatement getSensors;
-	private static final String GET_METRICS = "SELECT * FROM Metrics WHERE metricId = ?;";
+	private static final String GET_METRICS = "SELECT * FROM Metrics WHERE sensorId = ?;";
 	private static PreparedStatement getMetrics;
-	private static final String GET_MEASUREMENTS = "SELECT * FROM Measurements WHERE (metricId = ?) AND timestamp BETWEEN ? AND ?);";
+	private static final String GET_MEASUREMENTS = "SELECT * FROM Measurements WHERE (metricId = ?) AND (timestamp BETWEEN ? AND ?);";
 	private static PreparedStatement getMeasurements;
 
 	public MySqlDbHandler() {
-		readProperties();
-		connectToDb(host, port, dbname, user, password);
+		// readProperties();
+		// connectToDb(host, port, dbname, user, password);
+		connectToDb("mydbinstance.c0csbaeckwxw.us-west-2.rds.amazonaws.com", "3306", "ADE", "awsuser", "giorgos1525");
 		try {
 			createApp = conn.prepareStatement(CREATE_APP);
 			createSensor = conn.prepareStatement(CREATE_SENSOR);
@@ -173,19 +174,19 @@ public class MySqlDbHandler implements IDbHandler {
 		return sensor;
 	}
 
-	public ArrayList<Sensor> getSensors() {
+	public ArrayList<Sensor> getSensors(String appId) {
 		ArrayList<Sensor> sensors = new ArrayList<Sensor>();
 		try {
+			getSensors.setString(1, appId);
 			ResultSet rs = getSensors.executeQuery();
 			while (rs.next()) {
-				String appId = rs.getString("appId");
+				appId = rs.getString("appId");
 				String sensorId = rs.getString("sensorId");
 				String sensorName = rs.getString("sensorName");
 				String sensorDescription = rs.getString("sensorDescription");
 				Sensor sensor = new Sensor(appId, sensorId, sensorName, sensorDescription);
 				sensors.add(sensor);
 				sensorToJson(sensor);
-
 			}
 
 		} catch (SQLException e) {
@@ -214,7 +215,6 @@ public class MySqlDbHandler implements IDbHandler {
 	public ArrayList<Metric> getMetrics(String sensorId) {
 		Metric metric = null;
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
-
 		try {
 			getMetrics.setString(1, sensorId);
 			ResultSet rs = getMetrics.executeQuery();
@@ -238,6 +238,8 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean insertMeasurement(Metric metric) {
+		metricToJson(metric);
+
 		try {
 			insertMeasurement.setString(1, metric.getMetricId());
 			insertMeasurement.setString(2, metric.getValue());
@@ -282,9 +284,9 @@ public class MySqlDbHandler implements IDbHandler {
 	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2) {
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
 		try {
-			getMeasurements.setLong(1, date1);
-			getMeasurements.setLong(2, date2);
-			getMeasurements.setString(3, metricId);
+			getMeasurements.setString(1, metricId);
+			getMeasurements.setLong(2, date1);
+			getMeasurements.setLong(3, date2);
 			ResultSet rs = getMeasurements.executeQuery();
 			while (rs.next()) {
 				metricId = rs.getString("metricId");
@@ -450,6 +452,11 @@ public class MySqlDbHandler implements IDbHandler {
 	public String metricToJson(Metric metric) {
 		System.out.println(gson.toJson(metric));
 		return gson.toJson(metric);
+	}
+
+	public ArrayList<Sensor> getSensors() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
