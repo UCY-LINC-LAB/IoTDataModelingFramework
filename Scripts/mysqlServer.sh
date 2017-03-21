@@ -36,6 +36,8 @@ echo "[mysqld]
 ndbcluster # run NDB storage engine" >> /etc/my.cnf
 sudo groupadd mysql
 sudo useradd -r -g mysql -s /bin/false mysql
-sudo /opt/mysql/server-5.7/bin/mysqld --initialize
+sudo /opt/mysql/server-5.7/bin/mysql_secure_installation
 sudo cp /opt/mysql/server-5.7/support-files/mysql.server /etc/init.d/mysqld
+sudo systemctl start mysqld
+sudo ln -s /opt/mysql/server-5.7/bin/mysql /usr/bin/
 
