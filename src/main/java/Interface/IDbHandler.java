@@ -18,7 +18,7 @@ public interface IDbHandler {
 
 	public Sensor getSensor(String sensorId);
 
-	public ArrayList<Sensor> getSensors();
+	public ArrayList<Sensor> getSensors(String appId);
 
 	public boolean createMetric(Metric metric);
 

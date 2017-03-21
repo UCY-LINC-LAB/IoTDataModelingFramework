@@ -104,10 +104,10 @@ public class MongoDbHandler implements IDbHandler {
 		return sensor;
 	}
 
-	public ArrayList<Sensor> getSensors() {
+	public ArrayList<Sensor> getSensors(String appId) {
 		// TODO Auto-generated method stub
 		ArrayList<Sensor> sensors = new ArrayList<Sensor>();
-		MongoCursor<Document> cursor = sensorsCollection.find().iterator();
+		MongoCursor<Document> cursor = sensorsCollection.find(eq("sensorId", appId)).iterator();
 		try {
 			while (cursor.hasNext()) {
 				Document doc = cursor.next();
@@ -189,9 +189,9 @@ public class MongoDbHandler implements IDbHandler {
 		if (date1 < date2) {
 			measurementsCollection.find(and(gt("timestamp", date1), lte("timestamp", date2))).forEach(printBlock);
 		}
-		for (int i = 0; i < metrics.size(); i++) {
-			System.out.println(metricToJson(metrics.get(i)));
-		}
+		// for (int i = 0; i < metrics.size(); i++) {
+		// System.out.println(metricToJson(metrics.get(i)));
+		// }
 
 		return metrics;
 	}

@@ -1,6 +1,6 @@
 package dataGenerator;
 
-import java.util.Random;
+import java.util.ArrayList;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -15,23 +15,26 @@ import databases.MySQL.MySqlDbHandler;
 
 public class DataGenerator {
 
-	private final static String USER_AGENT = "Mozilla/5.0";
-
 	private static MySqlDbHandler db = new MySqlDbHandler();
+	//private static HbaseDbHandler db = new HbaseDbHandler();
+
 	// private static CassandraDbHandler db = new CassandraDbHandler();
 	// private static MongoDbHandler db = new MongoDbHandler();
 
+	@SuppressWarnings("unused")
 	private static String metric[] = { "Temperature", "Humidity", "UV index", "Wind", "Pressure", "Location", "Speed",
 			"Comment" };
+	@SuppressWarnings("unused")
 	private static String units[] = { "C", "%", "", "km/h", "hPa", "Coordinates", "km/h", "" };
+	@SuppressWarnings("unused")
 	private static String types[] = { "One Dimensional", "One Dimensional", " One Dimensional", "MultiDimensional",
 			"MultiDimensional", "Location", "MultiDimensional", "Text" };
 
-	private final static int appNum = 2;
-	private final static int sensorNum = 2;
+	private final static int appNum = 1;
+	private final static int sensorNum = 1;
 	private final static int mUnitsNum = 3;
-	private final static int time = 5000;
-	private final static int streamNum = 2;
+	private final static int time = 1000;
+	private final static int streamNum = 1000;
 	private final static int stringlen = 300;
 	private final static int numlen = 100;
 
@@ -42,33 +45,30 @@ public class DataGenerator {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
-		createDb();
-		System.out.println("Streaming data...");
+		// createDb();
+		// System.out.println("Streaming data...");
 		// streamData();
 
-		// Application app = new Application(null, "sdfsd", "wrgr");
-		// db.createApp(app);
-		// Sensor sensor = new Sensor(app.getAppId(), null, "sensor1", "sdfsd");
-		// db.createSensor(sensor);
-		// long unixTime = System.currentTimeMillis() / 1000L;
-		// Metric metric1 = new Metric(app.getAppId(), sensor.getSensorId(),
-		// null, "10", "10001", "fdgfD", unixTime);
-		// unixTime = System.currentTimeMillis() / 1000L;
-		// Metric metric2 = new Metric(app.getAppId(), sensor.getSensorId(),
-		// null, "10", "10001", "fdgfD", unixTime + 1);
-		//
-		// db.createMetric(metric1);
-		// db.createMetric(metric2);
-		// ArrayList<Metric> metrics = new ArrayList<Metric>();
-		// metrics.add(metric1);
-		// metrics.add(metric2);
-		// db.insertMeasurements(metrics);
-		// db.getApps();
-		// db.getSensors();
-		// db.getApp(app.getAppId());
-		// db.getSensor(sensor.getSensorId());
-		// db.getMeasurementsMetricFromTo(metric1.getMetricId(), 1486735488,
-		// 1486735491);
+		Application app = new Application(null, "sdfsd", "wrgr");
+		db.createApp(app);
+		Sensor sensor = new Sensor(app.getAppId(), null, "sensor1", "sdfsd");
+		db.createSensor(sensor);
+		long unixTime = System.currentTimeMillis() / 1000L;
+		Metric metric1 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime);
+		unixTime = System.currentTimeMillis() / 1000L;
+		Metric metric2 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime + 1);
+
+		db.createMetric(metric1);
+		db.createMetric(metric2);
+		ArrayList<Metric> metrics = new ArrayList<Metric>();
+		metrics.add(metric1);
+		metrics.add(metric2);
+		db.insertMeasurements(metrics);
+		db.getApps();
+		db.getSensors(app.getAppId());
+		db.getApp(app.getAppId());
+		db.getSensor(sensor.getSensorId());
+		db.getMeasurementsMetricFromTo(metric1.getMetricId(), 1486735488, 1486735491);
 
 	}
 
@@ -140,8 +140,7 @@ public class DataGenerator {
 						public void run() {
 							int counter = 0;
 							while (counter < streamNum || streamNum == 0) {
-								int randomtime = (int) (Math.random() * (time) + 1000);
-								int timeSleep = randomtime;
+								int timeSleep = time;
 								try {
 									Thread.sleep(timeSleep);
 								} catch (InterruptedException e) {

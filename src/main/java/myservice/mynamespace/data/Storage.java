@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.log4j.Logger;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Property;
@@ -45,6 +46,7 @@ import myservice.mynamespace.util.Util;
 public class Storage {
 
 	private MySqlDbHandler db;
+	final static Logger logger = Logger.getLogger(Storage.class);
 
 	private List<Entity> productList;
 
@@ -291,6 +293,7 @@ public class Storage {
 
 	/* HELPER */
 
+	@SuppressWarnings("unused")
 	private void initSampleData() {
 
 		// add some sample product entities
@@ -358,7 +361,9 @@ public class Storage {
 		}
 		// System.out.println(db.appToJson(app));
 		db.createApp(app);
-		db.appToJson(app);
+		if (logger.isDebugEnabled()) {
+			logger.debug(db.appToJson(app));
+		}
 		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, app.getAppId()))
 				.addProperty(new Property(null, "appName", ValueType.PRIMITIVE, app.getName()))
 				.addProperty(new Property(null, "appDesc", ValueType.PRIMITIVE, app.getDesc()));
@@ -381,7 +386,9 @@ public class Storage {
 			sensor = new Sensor(appId, null, sensorName, sensorDescription);
 		}
 		db.createSensor(sensor);
-
+		if (logger.isDebugEnabled()) {
+			logger.debug(db.sensorToJson(sensor));
+		}
 		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, sensor.getAppId()))
 				.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, sensor.getSensorId()))
 				.addProperty(new Property(null, "sensorName", ValueType.PRIMITIVE, sensor.getSensorName()))
@@ -399,7 +406,9 @@ public class Storage {
 
 		Metric metric = new Metric(appId, sensorId, null, typeOfData, mUnit, null, 0);
 		db.createMetric(metric);
-
+		if (logger.isDebugEnabled()) {
+			logger.debug(db.metricToJson(metric));
+		}
 		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, metric.getAppId()))
 				.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, metric.getSensorId()))
 				.addProperty(new Property(null, "metricId", ValueType.PRIMITIVE, metric.getMetricId()))
@@ -426,7 +435,9 @@ public class Storage {
 
 		Metric metric = new Metric(appId, sensorId, metricId, typeOfData, mUnit, value, Integer.valueOf(timestamp));
 		db.insertMeasurement(metric);
-
+		if (logger.isDebugEnabled()) {
+			logger.debug(db.metricToJson(metric));
+		}
 		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, metric.getAppId()))
 				.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, metric.getSensorId()))
 				.addProperty(new Property(null, "metricId", ValueType.PRIMITIVE, metric.getMetricId()))

@@ -262,7 +262,6 @@ public class MySqlDbHandler implements IDbHandler {
 				batch = batch + values;
 			}
 			batch = batch + end;
-			System.out.println(batch);
 			stmt = conn.prepareStatement(batch);
 			int position = 0;
 			for (int i = 0; i < metrics.size(); i++) {
@@ -354,17 +353,13 @@ public class MySqlDbHandler implements IDbHandler {
 			pass = null;
 		}
 
-		System.out.println(DB_URL);
-		// System.out.println(user);
-		// System.out.println(pass);
-
 		// STEP 2: Register JDBC driver
 		try {
 			Class.forName(JDBC_DRIVER);
-			System.out.println("Connecting to a selected database...");
+			// System.out.println("Connecting to a selected database...");
 			DriverManager.setLoginTimeout(5);
 			conn = DriverManager.getConnection(DB_URL, user, pass);
-			System.out.println("Connected database successfully...");
+			// System.out.println("Connected database successfully...");
 			stmt = conn.createStatement();
 
 		} catch (ClassNotFoundException e) {
@@ -439,24 +434,17 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public String appToJson(Application app) {
-		System.out.println(gson.toJson(app));
 		return gson.toJson(app);
 	}
 
 	public String sensorToJson(Sensor sensor) {
-		System.out.println(gson.toJson(sensor));
 		return gson.toJson(sensor);
 
 	}
 
 	public String metricToJson(Metric metric) {
-		System.out.println(gson.toJson(metric));
 		return gson.toJson(metric);
 	}
 
-	public ArrayList<Sensor> getSensors() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 }

@@ -132,10 +132,10 @@ public class CassandraDbHandler implements IDbHandler {
 		return sensor;
 	}
 
-	public ArrayList<Sensor> getSensors() {
+	public ArrayList<Sensor> getSensors(String appId) {
 		// TODO Auto-generated method stub
 		ArrayList<Sensor> sensors = new ArrayList<Sensor>();
-		BoundStatement bound = getSensors.bind();
+		BoundStatement bound = getSensors.bind(appId);
 		ResultSet rs = session.execute(bound);
 		while (!rs.isExhausted()) {
 			Row row = rs.one();
@@ -183,7 +183,7 @@ public class CassandraDbHandler implements IDbHandler {
 		for (int i = 0; i < metrics.size(); i++) {
 			batch.add(insertMeasurement.bind(metrics.get(i).getMetricId(), metrics.get(i).getTypeOfData(),
 					metrics.get(i).getmUnit(), metrics.get(i).getValue(), metrics.get(i).getTimestamp()));
-			System.out.println(batch.size());
+			// System.out.println(batch.size());
 
 		}
 		session.execute(batch);
@@ -298,18 +298,15 @@ public class CassandraDbHandler implements IDbHandler {
 	}
 
 	public String appToJson(Application app) {
-		System.out.println(gson.toJson(app));
 		return gson.toJson(app);
 	}
 
 	public String sensorToJson(Sensor sensor) {
-		System.out.println(gson.toJson(sensor));
 		return gson.toJson(sensor);
 
 	}
 
 	public String metricToJson(Metric metric) {
-		System.out.println(gson.toJson(metric));
 		return gson.toJson(metric);
 	}
 
