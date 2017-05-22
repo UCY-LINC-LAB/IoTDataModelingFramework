@@ -12,8 +12,8 @@
 
 | Path                                                                                           	| Method 	| Response                                                        	|
 |------------------------------------------------------------------------------------------------	|--------	|-----------------------------------------------------------------	|
-
-
+| /$metadata                                                                                      |GET      |Returns metadata for all entities (application, sensor,metric, measurement)
+| /$Applications                                                                                  |GET      |Returns details about every application in the database
 
 
 2. Generate IoTDataModelingFramework-jar-with-dependencies.jar
