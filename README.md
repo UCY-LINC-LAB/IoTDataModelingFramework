@@ -23,7 +23,7 @@
 | /Measurements?data=Json                                                                          |POST     |Insert a new measurement
 
 
-## Usage 1
+## Usage 2
 1. Generate IoTDataModelingFramework-jar-with-dependencies.jar
 2. Run with java -jar IoTDataModelingFramework-jar-with-dependencies.jar
 3. Arguments:
