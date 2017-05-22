@@ -48,6 +48,7 @@ import org.apache.olingo.server.api.uri.queryoption.FilterOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 
+import Logger.Logger;
 import myservice.mynamespace.data.Storage;
 
 public class DemoEntityCollectionProcessor implements EntityCollectionProcessor {
@@ -67,7 +68,10 @@ public class DemoEntityCollectionProcessor implements EntityCollectionProcessor 
 
 	public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo,
 			ContentType responseFormat) throws ODataApplicationException, SerializerException {
-		System.out.println("readEntityCollection");
+		//System.out.println("readEntityCollection");
+
+		long startTime = System.currentTimeMillis() / 1000L;
+
 		// 1st retrieve the requested EntitySet from the uriInfo (representation
 		// of the parsed URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -82,7 +86,7 @@ public class DemoEntityCollectionProcessor implements EntityCollectionProcessor 
 
 		if (edmEntitySet.getName().equals(DemoEdmProvider.ES_MEASUREMENTS_NAME) && filterOption != null) {
 			String uriString = request.getRawQueryPath();
-			System.out.println(uriString);
+			//System.out.println(uriString);
 			String[] getFilter = uriString.split("$filter=");
 			String[] sepAnds = getFilter[getFilter.length - 1].split("and");
 			if (sepAnds.length > 1) {
@@ -143,7 +147,6 @@ public class DemoEntityCollectionProcessor implements EntityCollectionProcessor 
 						// The result of the filter expression must be of type
 						// Edm.Boolean
 						if (visitorResult instanceof Boolean) {
-							System.out.println("true");
 							if (!Boolean.TRUE.equals(visitorResult)) {
 								// The expression evaluated to false (or null),
 								// so
@@ -184,6 +187,15 @@ public class DemoEntityCollectionProcessor implements EntityCollectionProcessor 
 		response.setContent(serializedContent);
 		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+
+		long endTime = System.currentTimeMillis() / 1000L;
+
+		String data = "Got " + edmEntitySet.getName() + " " + " Start " + startTime + " End " + endTime + " Difference "
+				+ (endTime - startTime) + " ms \n";
+
+		Logger.writeQuery(data);
+		//storage.closeCon();
+
 	}
 
 	/**
@@ -196,15 +208,14 @@ public class DemoEntityCollectionProcessor implements EntityCollectionProcessor 
 		String[] removedeq = uri.split("=");
 		String[] query = removedeq[1].split("%20");
 		String id = query[query.length - 1].replace("%27", "");
-		System.out.println("MetricId = " + id);
+		//System.out.println("MetricId = " + id);
 		return id;
 	}
 
 	private Long getTimestamp(String uri) {
-
 		String ts = uri.replace("%", "");
 		ts = uri.replace("%20", "");
-		System.out.println("Timestamp = " + Long.valueOf(ts));
+		//System.out.println("Timestamp = " + Long.valueOf(ts));
 		return Long.valueOf(ts);
 	}
 

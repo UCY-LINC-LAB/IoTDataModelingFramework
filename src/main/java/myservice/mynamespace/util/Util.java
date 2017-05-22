@@ -57,7 +57,7 @@ public class Util {
 
 	public static Entity findEntity(EdmEntityType edmEntityType, EntityCollection entitySet,
 			List<UriParameter> keyParams) throws ODataApplicationException {
-		System.out.println("Util Find Entity");
+		//System.out.println("Util Find Entity");
 		List<Entity> entityList = entitySet.getEntities();
 
 		// loop over all entities in order to find that one that matches all
@@ -81,7 +81,7 @@ public class Util {
 			// key
 			String keyName = key.getName();
 			String keyText = key.getText();
-			System.out.println(keyName + " " + keyText);
+			//System.out.println(keyName + " " + keyText);
 
 			// Edm: we need this info for the comparison below
 			EdmProperty edmKeyProperty = (EdmProperty) edmEntityType.getProperty(keyName);

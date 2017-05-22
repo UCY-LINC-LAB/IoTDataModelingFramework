@@ -1,19 +1,28 @@
 package Interface;
 
 public interface ISensor {
-
+	// Get application's id
 	public String getAppId();
 
-	public void setAppId(String appId);
+	// Set application's id
+	public boolean setAppId(String appId);
 
+	// Get sensor's name
 	public String getSensorName();
 
-	public void setSensorName(String sensorName);
+	// Set sensor's name
+	public boolean setSensorName(String sensorName);
 
+	// Get sensor's description
 	public String getSensorDesc();
 
-	public void setSensorDesc(String sensorDesc);
-	
+	// Set sensor's description
+	public boolean setSensorDesc(String sensorDesc);
+
+	// Get sensor's id
 	public String getSensorId();
 
 }
+
+
+

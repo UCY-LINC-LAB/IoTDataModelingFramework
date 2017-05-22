@@ -1,200 +1,174 @@
 package dataGenerator;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-
-import beans.Application;
-import beans.Metric;
-import beans.Sensor;
-import databases.MySQL.MySqlDbHandler;
+import Logger.Logger;
+import databases.CouchBase.CouchBaseDbHandler;
 
 public class DataGenerator {
 
-	private static MySqlDbHandler db = new MySqlDbHandler();
-	//private static HbaseDbHandler db = new HbaseDbHandler();
+	// private boolean enableRead = false;
+	// private boolean getDelay = false;
+	public static int reqPerSec;
+	public static int sumRps;
+	private static int numberOfThreads;
+	public static int sensors;
+	private static int streamNum;
+	public static String logsLocation;
+	public static String logsName;
 
-	// private static CassandraDbHandler db = new CassandraDbHandler();
-	// private static MongoDbHandler db = new MongoDbHandler();
+	public static ArrayList<Integer> rtt = new ArrayList<Integer>();
+	public static ArrayList<Integer> rttDelay = new ArrayList<Integer>();
 
-	@SuppressWarnings("unused")
-	private static String metric[] = { "Temperature", "Humidity", "UV index", "Wind", "Pressure", "Location", "Speed",
-			"Comment" };
-	@SuppressWarnings("unused")
-	private static String units[] = { "C", "%", "", "km/h", "hPa", "Coordinates", "km/h", "" };
-	@SuppressWarnings("unused")
-	private static String types[] = { "One Dimensional", "One Dimensional", " One Dimensional", "MultiDimensional",
-			"MultiDimensional", "Location", "MultiDimensional", "Text" };
-
-	private final static int appNum = 1;
-	private final static int sensorNum = 1;
-	private final static int mUnitsNum = 3;
-	private final static int time = 1000;
-	private final static int streamNum = 1000;
-	private final static int stringlen = 300;
-	private final static int numlen = 100;
-
-	private static Application apps[] = new Application[appNum];
-	private static Sensor sensors[][] = new Sensor[appNum][sensorNum];
-	private static Metric metrics[][][] = new Metric[appNum][sensorNum][mUnitsNum];
+	static ThreadPoolExecutor executorPool;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
-		// createDb();
-		// System.out.println("Streaming data...");
-		// streamData();
+		CouchBaseDbHandler db = new CouchBaseDbHandler();
 
-		Application app = new Application(null, "sdfsd", "wrgr");
-		db.createApp(app);
-		Sensor sensor = new Sensor(app.getAppId(), null, "sensor1", "sdfsd");
-		db.createSensor(sensor);
-		long unixTime = System.currentTimeMillis() / 1000L;
-		Metric metric1 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime);
-		unixTime = System.currentTimeMillis() / 1000L;
-		Metric metric2 = new Metric(app.getAppId(), sensor.getSensorId(), null, "10", "10001", "fdgfD", unixTime + 1);
+		if (args.length > 5) {
+			sensors = Integer.parseInt(args[0]);
+			streamNum = Integer.parseInt(args[1]);
+			int streamTime = Integer.parseInt(args[2]);
+			int periodTime = Integer.parseInt(args[3]);
+			int immStart = Integer.parseInt(args[4]);
+			logsLocation = args[5];
+			logsName = args[6];
 
-		db.createMetric(metric1);
-		db.createMetric(metric2);
-		ArrayList<Metric> metrics = new ArrayList<Metric>();
-		metrics.add(metric1);
-		metrics.add(metric2);
-		db.insertMeasurements(metrics);
-		db.getApps();
-		db.getSensors(app.getAppId());
-		db.getApp(app.getAppId());
-		db.getSensor(sensor.getSensorId());
-		db.getMeasurementsMetricFromTo(metric1.getMetricId(), 1486735488, 1486735491);
+			Date date = new Date();
 
-	}
+			Logger.writeDelay(date.toString());
+			Logger.writeInsertTime(date.toString());
+			Logger.writeQuery(date.toString());
+			Logger.writeRps(date.toString());
 
-	/**
-	 * Creates Application and sensors
-	 */
-	public static void createDb() {
-		for (int i = 0; i < appNum; i++) {
-			String appName = "app" + (i + 1);
-			apps[i] = new Application(null, appName, "desc");
-			// db.createApp(apps[i]);
-			try {
-				sendPost("Applications", db.appToJson(apps[i]));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			// RejectedExecutionHandler implementation
+			RejectedExecutionHandlerImpl rejectionHandler = new RejectedExecutionHandlerImpl();
+			// Get the ThreadFactory implementation to use
+			ThreadFactory threadFactory = Executors.defaultThreadFactory();
+			// creating the ThreadPoolExecutor
+			// after tests it was the maximum number of threads java could run
+			numberOfThreads = 5000;
+			executorPool = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 10, TimeUnit.MINUTES,
+					new ArrayBlockingQueue<Runnable>(numberOfThreads), threadFactory, rejectionHandler);
+
+			// start the monitoring thread
+			MyMonitorThread monitor = new MyMonitorThread(executorPool, 3);
+			Thread monitorThread = new Thread(monitor);
+			monitorThread.start();
+
+			ArrayList<Runnable> streamerList = new ArrayList<Runnable>();
+
+			startRpsCounter();
+			if (streamTime > 0)
+				startTimer(streamTime);
+
+			for (int i = 0; i < sensors; i++) {
+				Runnable streamer = new DataStream(0, i, streamNum, periodTime);
+				if (immStart >= 1) {
+					executorPool.execute(streamer);
+					// (new Thread(streamer)).start();
+				} else {
+					streamerList.add(streamer);
+				}
 			}
-			for (int j = 0; j < sensorNum; j++) {
-				String sensorName = appName + "_sensor" + (j + 1);
-				sensors[i][j] = new Sensor(apps[i].getAppId(), null, sensorName, "desc");
-				// db.createSensor(sensors[i][j]);
-				try {
-					sendPost("Sensors", db.sensorToJson(sensors[i][j]));
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			if (immStart <= 0) {
+				for (int i = 0; i < sensors; i++) {
+					executorPool.execute(streamerList.get(i));
 				}
-
-				metrics[i][j][0] = new Metric(apps[i].getAppId(), sensors[i][j].getSensorId(), null, "Text", "", null,
-						0);
-				// db.createMetric(metrics[i][j][k]);
-				try {
-					sendPost("Metrics", db.metricToJson(metrics[i][j][0]));
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				metrics[i][j][1] = new Metric(apps[i].getAppId(), sensors[i][j].getSensorId(), null, "One Dimensional",
-						"C", null, 0);
-				// db.createMetric(metrics[i][j][k]);
-				try {
-					sendPost("Metrics", db.metricToJson(metrics[i][j][1]));
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				metrics[i][j][2] = new Metric(apps[i].getAppId(), sensors[i][j].getSensorId(), null, "One Dimensional",
-						"hPa", null, 0);
-				// db.createMetric(metrics[i][j][k]);
-				try {
-					sendPost("Metrics", db.metricToJson(metrics[i][j][2]));
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
 			}
+
+		} else {
+			System.out.println(
+					"Arguments needed! Sensors,Stream Number,Stream Time,Period Time,Fast Start(0 or 1),Logs location");
 		}
 	}
 
-	public static void streamData() {
-		for (int i = 0; i < appNum; i++) {
-			for (int j = 0; j < sensorNum; j++) {
-				for (int k = 0; k < mUnitsNum; k++) {
-					final int appPos = i;
-					final int sensorPos = j;
-					final int metricPos = k;
-					new Thread() {
-						public void run() {
-							int counter = 0;
-							while (counter < streamNum || streamNum == 0) {
-								int timeSleep = time;
-								try {
-									Thread.sleep(timeSleep);
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								long unixTime = System.currentTimeMillis() / 1000L;
-								metrics[appPos][sensorPos][metricPos].setTimestamp(unixTime);
-								String value = generateString((int) (Math.random() * (20 - 1) + 1));
-								value = String.valueOf(counter + 1);
+	public static ThreadPoolExecutor returnExecutor() {
+		return executorPool;
+	}
 
-								if (metrics[appPos][sensorPos][metricPos].getTypeOfData().compareTo("Text") != 0) {
-									// int num = (int) (Math.random() * (300));
-									value = String.valueOf((int) (Math.random() * (numlen)));
-
-								} else {
-									int num = (int) (Math.random() * (stringlen));
-									value = String.valueOf(generateString(num));
-								}
-
-								metrics[appPos][sensorPos][metricPos].setValue(value);
-								// db.insertMeasurement(metrics[appPos][sensorPos][metricPos]);
-								try {
-									sendPost("Measurements", db.metricToJson(metrics[appPos][sensorPos][metricPos]));
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								counter++;
-							}
+	public static void startRpsCounter() {
+		reqPerSec = 0;
+		sumRps = 0;
+		executorPool.execute(new Runnable() {
+			public void run() {
+				int time = 0;
+				while (true) {
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					if (reqPerSec > 0) {
+						time++;
+						System.out.println(reqPerSec);
+						sumRps += reqPerSec;
+						// writes RPS to file
+						// Logger.writeRps(String.valueOf(reqPerSec));
+						reqPerSec = 0;
+						if (reqPerSec == 0) {
+							Logger.writeRps("Number of Requests " + sumRps + " Average RPS "
+									+ String.valueOf((int) sumRps / time));
 						}
-					}.start();
+					}
+
+					if (rtt.size() == sensors || rttDelay.size() == sensors) {
+						int sum = 0;
+						for (int i = 0; i < rtt.size(); i++) {
+							sum += rtt.get(i);
+						}
+						String toWrite = "Average of All Sensors = " + (sum / sensors) + " ms";
+						Logger.writeInsertTime(toWrite);
+						System.out.println(toWrite);
+						rtt.removeAll(rtt);
+					}
+
+					if (rttDelay.size() == sensors || rtt.size() == sensors) {
+						int sum = 0;
+						for (int i = 0; i < rttDelay.size(); i++) {
+							sum += rttDelay.get(i);
+						}
+						String toWrite = "Average of All Sensors delay = " + (sum / sensors) + " ms";
+						Logger.writeDelay(toWrite);
+						System.out.println(toWrite);
+						rttDelay.removeAll(rttDelay);
+
+					}
+
 				}
 			}
-		}
+		});
 	}
 
-	// HTTP POST request
-	public static void sendPost(String object, String data) throws Exception {
-		String postUrl = "http://localhost:8080/IoTDataModelingFramework/DemoService.svc/" + object;
-		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpPost post = new HttpPost(postUrl);
-		StringEntity postingString = new StringEntity(data);
-		post.setEntity(postingString);
-		post.setHeader("Content-type", "application/json");
-		HttpResponse response = httpClient.execute(post);
-	}
-
-	public static String generateString(int length) {
-		char[] text = new char[length];
-		for (int i = 0; i < length; i++) {
-			text[i] = (char) (Math.random() * (122 - 97 + 1) + 97);
+	public static void startTimer(int streamTime) {
+		System.out.println(Thread.currentThread().getName() + " Start executor shutdown!");
+		try {
+			TimeUnit.MINUTES.sleep(streamTime);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
-		return new String(text);
+		try {
+			System.out.println("attempt to shutdown executor");
+			executorPool.shutdown();
+			executorPool.awaitTermination(streamTime, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			System.err.println("tasks interrupted");
+		} finally {
+			if (!executorPool.isTerminated()) {
+				System.err.println("cancel non-finished tasks");
+			}
+			executorPool.shutdownNow();
+			System.out.println("shutdown finished");
+			System.exit(1);
+		}
 	}
 
 }

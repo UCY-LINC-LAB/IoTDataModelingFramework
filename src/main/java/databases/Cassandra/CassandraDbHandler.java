@@ -1,14 +1,15 @@
 package databases.Cassandra;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -20,6 +21,7 @@ import Interface.IDbHandler;
 import beans.Application;
 import beans.Metric;
 import beans.Sensor;
+import databases.MySQL.MySqlDbHandler;
 
 public class CassandraDbHandler implements IDbHandler {
 
@@ -29,23 +31,23 @@ public class CassandraDbHandler implements IDbHandler {
 	private static String user;
 	private static String password;
 
-	Cluster cluster;
-	Session session;
+	private static Cluster cluster;
+	private static Session session;
 
 	private static GsonBuilder builder = new GsonBuilder();
 	private static Gson gson = builder.create();
 
 	private static final String CREATE_APP = "INSERT INTO Applications (" + " appId," + " appName,"
-			+ " appDescription) VALUES (?, ?, ?)";
+			+ " appDescription) VALUES (?,?,?)";
 	private static PreparedStatement createApp;
 	private static final String CREATE_SENSOR = "INSERT INTO Sensors (" + " appId," + " sensorId, " + " sensorName,"
-			+ " sensorDescription) VALUES (?, ?, ?, ?);";
+			+ " sensorDescription) VALUES (?,?,?,?);";
 	private static PreparedStatement createSensor;
 	private static final String CREATE_METRIC = "INSERT INTO Metrics (" + " appId," + " sensorId, " + "metricId, "
-			+ " typeOfData," + " mUnit) VALUES (?, ?, ?, ?,?);";
+			+ " typeOfData," + " mUnit) VALUES (?,?,?,?,?);";
 	private static PreparedStatement createMetric;
 	private static final String INSERT_MEASUREMENT = "INSERT INTO Measurements (" + " metricId," + " typeOfData,"
-			+ " mUnit," + " value, " + "timestamp) VALUES (?,?,?, ?, ?);";
+			+ " mUnit," + " value, " + " timestamp) VALUES (?,?,?,?,?);";
 	private static PreparedStatement insertMeasurement;
 
 	private static final String GET_APPS = "SELECT * FROM Applications;";
@@ -58,23 +60,28 @@ public class CassandraDbHandler implements IDbHandler {
 	private static PreparedStatement getSensors;
 	private static final String GET_METRICS = "SELECT * FROM Metrics WHERE metricId = ?;";
 	private static PreparedStatement getMetrics;
-	private static final String GET_MEASUREMENTS = "SELECT * FROM Measurements WHERE (metricId = ?) AND (timestamp < ? AND timestamp >  ?));";
+	private static final String GET_MEASUREMENTS = "SELECT * FROM Measurements WHERE metricId = ? AND timestamp < ? AND timestamp >  ?;";
 	private static PreparedStatement getMeasurements;
 
 	public CassandraDbHandler() {
-		readProperties();
-		connectToDb(host, port, dbname, user, password);
-		createApp = session.prepare(CREATE_APP);
-		createSensor = session.prepare(CREATE_SENSOR);
-		createMetric = session.prepare(CREATE_METRIC);
-		insertMeasurement = session.prepare(INSERT_MEASUREMENT);
-		getApps = session.prepare(GET_APPS);
-		getApp = session.prepare(GET_APP);
-		getSensor = session.prepare(GET_SENSOR);
-		getSensors = session.prepare(GET_SENSORS);
-		getMetrics = session.prepare(GET_METRICS);
-		getMeasurements = session.prepare(GET_MEASUREMENTS);
-
+		if (host == null) {
+			readProperties();
+		}
+		if (cluster == null || session == null) {
+			connectToDb(host, port, dbname, user, password);
+		}
+		if (getApps == null) {
+			createApp = session.prepare(CREATE_APP);
+			createSensor = session.prepare(CREATE_SENSOR);
+			createMetric = session.prepare(CREATE_METRIC);
+			insertMeasurement = session.prepare(INSERT_MEASUREMENT);
+			getApps = session.prepare(GET_APPS);
+			getApp = session.prepare(GET_APP);
+			getSensor = session.prepare(GET_SENSOR);
+			getSensors = session.prepare(GET_SENSORS);
+			getMetrics = session.prepare(GET_METRICS);
+			getMeasurements = session.prepare(GET_MEASUREMENTS);
+		}
 	}
 
 	public boolean createApp(Application app) {
@@ -233,14 +240,16 @@ public class CassandraDbHandler implements IDbHandler {
 	}
 
 	public void connectToDb(String host, String port, String db, String user, String pass) {
-		// TODO Auto-generated method stub
-		// Creating Cluster.Builder object
-		Cluster.Builder builder1 = Cluster.builder();
-		// Adding contact point to the Cluster.Builder object
-		Cluster.Builder builder2 = builder1.addContactPoint("52.26.188.76");
-		// Building a cluster
-		cluster = builder2.build();
-		session = cluster.connect("ade");
+		if (cluster == null) {
+			PoolingOptions poolingOptions = new PoolingOptions();
+			poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 10000)
+					.setMaxConnectionsPerHost(HostDistance.LOCAL, 10000)
+					.setCoreConnectionsPerHost(HostDistance.REMOTE, 10000)
+					.setMaxConnectionsPerHost(HostDistance.REMOTE, 10000);
+			cluster = Cluster.builder().addContactPoints(host).withPoolingOptions(poolingOptions).build();
+		}
+		session = cluster.connect(db);
+		System.out.println("Connections Success!");
 	}
 
 	public boolean closeConnection() {
@@ -262,38 +271,43 @@ public class CassandraDbHandler implements IDbHandler {
 	}
 
 	public void readProperties() {
+		Properties prop = new Properties();
+		InputStream input = null;
 		try {
-			@SuppressWarnings("resource")
-			BufferedReader bf = new BufferedReader(new FileReader("src/main/resources/iot.properties"));
-			String line = null;
-			while ((line = bf.readLine()) != null) {
-				String[] parts = line.split("=");
-				if (parts[1] == null) {
-					System.out.println("Missing properties!");
-				} else {
-					if (parts[0].compareTo("db.host") == 0) {
-						host = parts[1];
-					} else if (parts[0].compareTo("db.user") == 0) {
-						user = parts[1];
-					} else if (parts[0].compareTo("db.password") == 0) {
-						password = parts[1];
-					} else if (parts[0].compareTo("db.port") == 0) {
-						port = parts[1];
-					} else if (parts[0].compareTo("db.name") == 0) {
-						dbname = parts[1];
-					} else {
-						System.out.println("Wrong properties!");
-					}
 
-				}
+			String filename = "iot.properties";
+			input = MySqlDbHandler.class.getClassLoader().getResourceAsStream(filename);
+			if (input == null) {
+				System.out.println("Sorry, unable to find " + filename);
+				return;
 			}
 
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// load a properties file from class path, inside static method
+			prop.load(input);
+
+			// get the property value and print it out
+			// System.out.println(prop.getProperty("db.host"));
+			// System.out.println(prop.getProperty("db.user"));
+			// System.out.println(prop.getProperty("db.password"));
+			// System.out.println(prop.getProperty("db.port"));
+			// System.out.println(prop.getProperty("db.name"));
+
+			host = prop.getProperty("db.host");
+			user = prop.getProperty("db.user");
+			password = prop.getProperty("db.password");
+			port = prop.getProperty("db.port");
+			dbname = prop.getProperty("db.name");
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 

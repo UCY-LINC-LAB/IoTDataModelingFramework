@@ -17,14 +17,6 @@ public class Sensor implements ISensor {
 		if (sensorId == null) {
 			this.sensorId = generateUuid();
 		} else {
-			// try {
-			// UUID uuid = UUID.fromString(sensorId);
-			// this.sensorId = uuid.toString();
-			// // do something
-			// } catch (IllegalArgumentException exception) {
-			// // handle the case where string is not valid UUID
-			// this.sensorId = generateUuid();
-			// }
 			this.sensorId = sensorId;
 		}
 	}
@@ -33,24 +25,27 @@ public class Sensor implements ISensor {
 		return appId;
 	}
 
-	public void setAppId(String appId) {
+	public boolean setAppId(String appId) {
 		this.appId = appId;
+		return true;
 	}
 
 	public String getSensorName() {
 		return sensorName;
 	}
 
-	public void setSensorName(String sensorName) {
+	public boolean setSensorName(String sensorName) {
 		this.sensorName = sensorName;
+		return true;
 	}
 
 	public String getSensorDesc() {
 		return sensorDesc;
 	}
 
-	public void setSensorDesc(String sensorDesc) {
+	public boolean setSensorDesc(String sensorDesc) {
 		this.sensorDesc = sensorDesc;
+		return true;
 	}
 
 	public String getSensorId() {

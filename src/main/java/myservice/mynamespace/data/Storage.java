@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.log4j.Logger;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Property;
@@ -39,28 +38,34 @@ import org.apache.olingo.server.api.uri.UriParameter;
 import beans.Application;
 import beans.Metric;
 import beans.Sensor;
+import databases.Cassandra.CassandraDbHandler;
 import databases.MySQL.MySqlDbHandler;
 import myservice.mynamespace.service.DemoEdmProvider;
 import myservice.mynamespace.util.Util;
 
 public class Storage {
 
-	private MySqlDbHandler db;
-	final static Logger logger = Logger.getLogger(Storage.class);
+	MySqlDbHandler db;
+	//CassandraDbHandler db;
+	// static MongoDbHandler db;
+	// static CouchBaseDbHandler db;
 
 	private List<Entity> productList;
 
 	public Storage() {
 		productList = new ArrayList<Entity>();
-		if (db == null)
+		if (db == null) {
 			db = new MySqlDbHandler();
-		// initSampleData();
+			//db = new CassandraDbHandler();
+			// db = new MongoDbHandler();
+			// db = new CouchBaseDbHandler();
+		}
 	}
 
 	/* PUBLIC FACADE */
 
 	public EntityCollection readEntitySetData(EdmEntitySet edmEntitySet) throws ODataApplicationException {
-		System.out.println("readEnitySetData");
+		// System.out.println("readEnitySetData");
 		// actually, this is only required if we have more than one Entity Sets
 		if (edmEntitySet.getName().equals(DemoEdmProvider.ES_PRODUCTS_NAME)) {
 			return getProducts();
@@ -77,7 +82,7 @@ public class Storage {
 
 	public Entity readEntityData(EdmEntitySet edmEntitySet, List<UriParameter> keyParams)
 			throws ODataApplicationException {
-		System.out.println("Read Entity Data");
+		// System.out.println("Read Entity Data");
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
 
 		// actually, this is only required if we have more than one Entity Type
@@ -174,7 +179,7 @@ public class Storage {
 		keytext = keytext.replace("'", "");
 		keytext = keytext.replace("\"", "");
 
-		System.out.println("Get application " + keyname + " " + keytext);
+		// System.out.println("Get application " + keyname + " " + keytext);
 
 		Application app = db.getApp(keytext);
 
@@ -198,7 +203,7 @@ public class Storage {
 	public EntityCollection getAppSensors(String keyname, String keytext) throws ODataApplicationException {
 
 		EntityCollection retEntitySet = new EntityCollection();
-		System.out.println("Get app sensors " + keyname + " " + keytext);
+		// System.out.println("Get app sensors " + keyname + " " + keytext);
 
 		ArrayList<Sensor> sensors = new ArrayList<Sensor>();
 
@@ -230,7 +235,8 @@ public class Storage {
 	public EntityCollection getSensorMetrics(String keyname, String keytext) throws ODataApplicationException {
 
 		EntityCollection retEntitySet = new EntityCollection();
-		System.out.println("Get metrics for sensors " + keyname + " " + keytext);
+		// System.out.println("Get metrics for sensors " + keyname + " " +
+		// keytext);
 
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
 
@@ -269,7 +275,7 @@ public class Storage {
 		keytext = keytext.replace("'", "");
 		keytext = keytext.replace("\"", "");
 
-		System.out.println("Get sensor " + keyname + " " + keytext);
+		// System.out.println("Get sensor " + keyname + " " + keytext);
 
 		Sensor sensor = db.getSensor(keytext);
 
@@ -352,7 +358,6 @@ public class Storage {
 		String appId = entity.getProperty("appId").getValue().toString();
 		Application app = null;
 		if (appId != null) {
-			System.out.println(appId);
 			app = new Application(appId, entity.getProperty("appName").getValue().toString(),
 					entity.getProperty("appDesc").getValue().toString());
 		} else {
@@ -360,17 +365,15 @@ public class Storage {
 					entity.getProperty("appDesc").getValue().toString());
 		}
 		// System.out.println(db.appToJson(app));
-		db.createApp(app);
-		if (logger.isDebugEnabled()) {
-			logger.debug(db.appToJson(app));
+		if (db.createApp(app)) {
+			entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, app.getAppId()))
+					.addProperty(new Property(null, "appName", ValueType.PRIMITIVE, app.getName()))
+					.addProperty(new Property(null, "appDesc", ValueType.PRIMITIVE, app.getDesc()));
+			entity.setId(createId("Application", app.getAppId()));
+		} else {
+			entity = null;
 		}
-		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, app.getAppId()))
-				.addProperty(new Property(null, "appName", ValueType.PRIMITIVE, app.getName()))
-				.addProperty(new Property(null, "appDesc", ValueType.PRIMITIVE, app.getDesc()));
-		entity.setId(createId("Application", app.getAppId()));
-
 		return entity;
-
 	}
 
 	private Entity createSensor(EdmEntityType edmEntityType, Entity entity) {
@@ -385,16 +388,16 @@ public class Storage {
 		} else {
 			sensor = new Sensor(appId, null, sensorName, sensorDescription);
 		}
-		db.createSensor(sensor);
-		if (logger.isDebugEnabled()) {
-			logger.debug(db.sensorToJson(sensor));
-		}
-		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, sensor.getAppId()))
-				.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, sensor.getSensorId()))
-				.addProperty(new Property(null, "sensorName", ValueType.PRIMITIVE, sensor.getSensorName()))
-				.addProperty(new Property(null, "sensorDesc", ValueType.PRIMITIVE, sensor.getSensorDesc()));
+		if (db.createSensor(sensor)) {
+			entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, sensor.getAppId()))
+					.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, sensor.getSensorId()))
+					.addProperty(new Property(null, "sensorName", ValueType.PRIMITIVE, sensor.getSensorName()))
+					.addProperty(new Property(null, "sensorDesc", ValueType.PRIMITIVE, sensor.getSensorDesc()));
 
-		entity.setId(createId("Sensor", sensor.getSensorId()));
+			entity.setId(createId("Sensor", sensor.getSensorId()));
+		} else {
+			entity = null;
+		}
 		return entity;
 	}
 
@@ -405,26 +408,23 @@ public class Storage {
 		String mUnit = entity.getProperty("mUnit").getValue().toString();
 
 		Metric metric = new Metric(appId, sensorId, null, typeOfData, mUnit, null, 0);
-		db.createMetric(metric);
-		if (logger.isDebugEnabled()) {
-			logger.debug(db.metricToJson(metric));
+		if (db.createMetric(metric)) {
+			entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, metric.getAppId()))
+					.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, metric.getSensorId()))
+					.addProperty(new Property(null, "metricId", ValueType.PRIMITIVE, metric.getMetricId()))
+					.addProperty(new Property(null, "typeOfData", ValueType.PRIMITIVE, metric.getTypeOfData()))
+					.addProperty(new Property(null, "mUnit", ValueType.PRIMITIVE, metric.getmUnit()))
+					.addProperty(new Property(null, "value", ValueType.PRIMITIVE, metric.getValue()))
+					.addProperty(new Property(null, "timestamp", ValueType.PRIMITIVE, metric.getTimestamp()));
+			entity.setId(createId("Metric", metric.getMetricId()));
+			// System.out.println("Metric insert");
+		} else {
+			entity = null;
 		}
-		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, metric.getAppId()))
-				.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, metric.getSensorId()))
-				.addProperty(new Property(null, "metricId", ValueType.PRIMITIVE, metric.getMetricId()))
-				.addProperty(new Property(null, "typeOfData", ValueType.PRIMITIVE, metric.getTypeOfData()))
-				.addProperty(new Property(null, "mUnit", ValueType.PRIMITIVE, metric.getmUnit()))
-				.addProperty(new Property(null, "value", ValueType.PRIMITIVE, metric.getValue()))
-				.addProperty(new Property(null, "timestamp", ValueType.PRIMITIVE, metric.getTimestamp()));
-		entity.setId(createId("Metric", metric.getMetricId()));
-
-		System.out.println("Metric insert");
-
 		return entity;
 	}
 
 	private Entity insertMeasurement(EdmEntityType edmEntityType, Entity entity) {
-
 		String appId = entity.getProperty("appId").getValue().toString();
 		String sensorId = entity.getProperty("sensorId").getValue().toString();
 		String metricId = entity.getProperty("metricId").getValue().toString();
@@ -434,25 +434,23 @@ public class Storage {
 		String timestamp = entity.getProperty("timestamp").getValue().toString();
 
 		Metric metric = new Metric(appId, sensorId, metricId, typeOfData, mUnit, value, Integer.valueOf(timestamp));
-		db.insertMeasurement(metric);
-		if (logger.isDebugEnabled()) {
-			logger.debug(db.metricToJson(metric));
+		if (db.insertMeasurement(metric)) {
+			entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, metric.getAppId()))
+					.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, metric.getSensorId()))
+					.addProperty(new Property(null, "metricId", ValueType.PRIMITIVE, metric.getMetricId()))
+					.addProperty(new Property(null, "typeOfData", ValueType.PRIMITIVE, metric.getTypeOfData()))
+					.addProperty(new Property(null, "mUnit", ValueType.PRIMITIVE, metric.getmUnit()))
+					.addProperty(new Property(null, "value", ValueType.PRIMITIVE, metric.getValue()))
+					.addProperty(new Property(null, "timestamp", ValueType.PRIMITIVE, metric.getTimestamp()));
+			entity.setId(createId("Metric", metric.getMetricId()));
+		} else {
+			entity = null;
 		}
-		entity = new Entity().addProperty(new Property(null, "appId", ValueType.PRIMITIVE, metric.getAppId()))
-				.addProperty(new Property(null, "sensorId", ValueType.PRIMITIVE, metric.getSensorId()))
-				.addProperty(new Property(null, "metricId", ValueType.PRIMITIVE, metric.getMetricId()))
-				.addProperty(new Property(null, "typeOfData", ValueType.PRIMITIVE, metric.getTypeOfData()))
-				.addProperty(new Property(null, "mUnit", ValueType.PRIMITIVE, metric.getmUnit()))
-				.addProperty(new Property(null, "value", ValueType.PRIMITIVE, metric.getValue()))
-				.addProperty(new Property(null, "timestamp", ValueType.PRIMITIVE, metric.getTimestamp()));
-
-		entity.setId(createId("Metric", metric.getMetricId()));
 
 		return entity;
 	}
 
 	private Entity createProduct(EdmEntityType edmEntityType, Entity entity) {
-
 		// the ID of the newly created product entity is generated automatically
 		int newId = 1;
 		while (productIdExists(newId)) {
@@ -471,7 +469,6 @@ public class Storage {
 		this.productList.add(entity);
 
 		return entity;
-
 	}
 
 	private boolean productIdExists(int id) {
@@ -482,6 +479,10 @@ public class Storage {
 			}
 		}
 		return false;
+	}
+
+	public boolean closeCon() {
+		return db.closeConnection();
 	}
 
 }

@@ -2,15 +2,21 @@ package Interface;
 
 public interface IApplication {
 
+	// Get application's name
 	public String getName();
 
-	public void setName(String name);
+	// Set application's name
+	public boolean setName(String name);
 
+	// Get application's description
 	public String getDesc();
 
-	public void setDesc(String desc);
+	// Set application's description
+	public boolean setDesc(String desc);
 
+	// Get application's id
 	public String getAppId();
-	
 
 }
+
+

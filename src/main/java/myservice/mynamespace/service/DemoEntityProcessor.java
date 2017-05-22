@@ -22,16 +22,12 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 
-import myservice.mynamespace.data.Storage;
-import myservice.mynamespace.util.Util;
-
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
-import org.apache.olingo.commons.api.http.HttpMethod;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataApplicationException;
@@ -52,6 +48,7 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 
 import myservice.mynamespace.data.Storage;
+import myservice.mynamespace.util.Util;
 
 public class DemoEntityProcessor implements EntityProcessor {
 
@@ -70,7 +67,7 @@ public class DemoEntityProcessor implements EntityProcessor {
 
 	public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
 			throws ODataApplicationException, SerializerException {
-		System.out.println("Read Entity");
+		//System.out.println("Read Entity");
 
 		// 1. retrieve the Entity Type
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -98,6 +95,7 @@ public class DemoEntityProcessor implements EntityProcessor {
 		response.setContent(entityStream);
 		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+		//storage.closeCon();
 	}
 
 	/*
@@ -138,6 +136,7 @@ public class DemoEntityProcessor implements EntityProcessor {
 		response.setContent(serializedResponse.getContent());
 		response.setStatusCode(HttpStatusCode.CREATED.getStatusCode());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+		//storage.closeCon();
 	}
 
 	public void updateEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat,

@@ -1,9 +1,7 @@
 package databases.MySQL;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -11,6 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Properties;
+
+import javax.sql.DataSource;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,9 +23,13 @@ import beans.Sensor;
 
 public class MySqlDbHandler implements IDbHandler {
 
-	private static Connection conn = null;
-	private static Statement stmt = null;
-	private static ResultSet rs = null;
+	private static ConnectionPool connPool;
+	private static DataSource dataSource;
+
+	private Connection conn = null;
+	private Statement stmt = null;
+	private ResultSet rs = null;
+	private final int timeout = 10; // connection time out.
 
 	private static String host;
 	private static String dbname;
@@ -32,58 +37,73 @@ public class MySqlDbHandler implements IDbHandler {
 	private static String user;
 	private static String password;
 
-	private static GsonBuilder builder = new GsonBuilder();
-	private static Gson gson = builder.create();
+	private GsonBuilder builder = new GsonBuilder();
+	private Gson gson = builder.create();
 
-	private static final String CREATE_APP = "INSERT INTO Applications (" + " appId," + " appName,"
+	private final String CREATE_APP = "INSERT INTO Applications (" + " appId," + " appName,"
 			+ " appDescription) VALUES (?, ?, ?);";
-	private static PreparedStatement createApp;
-	private static final String CREATE_SENSOR = "INSERT INTO Sensors (" + " appId," + " sensorId, " + " sensorName,"
+	private PreparedStatement createApp;
+	private final String CREATE_SENSOR = "INSERT INTO Sensors (" + " appId," + " sensorId, " + " sensorName,"
 			+ " sensorDescription) VALUES (?, ?, ?, ?);";
-	private static PreparedStatement createSensor;
-	private static final String CREATE_METRIC = "INSERT INTO Metrics (" + " appId," + " sensorId, " + "metricId, "
+	private PreparedStatement createSensor;
+	private final String CREATE_METRIC = "INSERT INTO Metrics (" + " appId," + " sensorId, " + "metricId, "
 			+ " typeOfData," + " mUnit) VALUES (?, ?, ?, ?,?);";
-	private static PreparedStatement createMetric;
-	private static final String INSERT_MEASUREMENT = "INSERT INTO Measurements (" + " metricId," + " value, "
+	private PreparedStatement createMetric;
+	private final String INSERT_MEASUREMENT = "INSERT INTO Measurements (" + " metricId," + " value, "
 			+ "timestamp) VALUES (?, ?, ?);";
-	private static PreparedStatement insertMeasurement;
+	private PreparedStatement insertMeasurement;
 
-	private static final String GET_APPS = "SELECT * FROM Applications;";
-	private static PreparedStatement getApps;
-	private static final String GET_APP = "SELECT * FROM Applications WHERE appId = ?;";
-	private static PreparedStatement getApp;
-	private static final String GET_SENSOR = "SELECT * FROM Sensors WHERE sensorId = ?;";
-	private static PreparedStatement getSensor;
-	private static final String GET_SENSORS = "SELECT * FROM Sensors WHERE appId = ?;";
-	private static PreparedStatement getSensors;
-	private static final String GET_METRICS = "SELECT * FROM Metrics WHERE sensorId = ?;";
-	private static PreparedStatement getMetrics;
-	private static final String GET_MEASUREMENTS = "SELECT * FROM Measurements WHERE (metricId = ?) AND (timestamp BETWEEN ? AND ?);";
-	private static PreparedStatement getMeasurements;
+	private final String GET_APPS = "SELECT * FROM Applications;";
+	private PreparedStatement getApps;
+	private final String GET_APP = "SELECT * FROM Applications WHERE appId = ?;";
+	private PreparedStatement getApp;
+	private final String GET_SENSOR = "SELECT * FROM Sensors WHERE sensorId = ?;";
+	private PreparedStatement getSensor;
+	private final String GET_SENSORS = "SELECT * FROM Sensors WHERE appId = ?;";
+	private PreparedStatement getSensors;
+	private final String GET_METRICS = "SELECT * FROM Metrics WHERE sensorId = ?;";
+	private PreparedStatement getMetrics;
+	private final String GET_MEASUREMENTS = "SELECT * FROM Measurements WHERE (metricId = ?) AND (timestamp BETWEEN ? AND ?);";
+	private PreparedStatement getMeasurements;
 
 	public MySqlDbHandler() {
-		// readProperties();
-		// connectToDb(host, port, dbname, user, password);
-		connectToDb("mydbinstance.c0csbaeckwxw.us-west-2.rds.amazonaws.com", "3306", "ADE", "awsuser", "giorgos1525");
-		try {
-			createApp = conn.prepareStatement(CREATE_APP);
-			createSensor = conn.prepareStatement(CREATE_SENSOR);
-			createMetric = conn.prepareStatement(CREATE_METRIC);
-			insertMeasurement = conn.prepareStatement(INSERT_MEASUREMENT);
-			getApps = conn.prepareStatement(GET_APPS);
-			getApp = conn.prepareStatement(GET_APP);
-			getSensor = conn.prepareStatement(GET_SENSOR);
-			getSensors = conn.prepareStatement(GET_SENSORS);
-			getMetrics = conn.prepareStatement(GET_METRICS);
-			getMeasurements = conn.prepareStatement(GET_MEASUREMENTS);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (host == null) {
+			readProperties();
 		}
+
+		if (conn == null) {
+			connectToDb(host, port, dbname, user, password);
+			// connectToDb("127.0.0.1", port, dbname, "root", "awsuser");
+		}
+		if (createApp == null) {
+			try {
+				createApp = conn.prepareStatement(CREATE_APP);
+				createSensor = conn.prepareStatement(CREATE_SENSOR);
+				createMetric = conn.prepareStatement(CREATE_METRIC);
+				insertMeasurement = conn.prepareStatement(INSERT_MEASUREMENT);
+				getApps = conn.prepareStatement(GET_APPS);
+				getApp = conn.prepareStatement(GET_APP);
+				getSensor = conn.prepareStatement(GET_SENSOR);
+				getSensors = conn.prepareStatement(GET_SENSORS);
+				getMetrics = conn.prepareStatement(GET_METRICS);
+				getMeasurements = conn.prepareStatement(GET_MEASUREMENTS);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 	public boolean createApp(Application app) {
-		appToJson(app);
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		try {
 			createApp.setString(1, app.getAppId());
 			createApp.setString(2, app.getName());
@@ -95,10 +115,19 @@ public class MySqlDbHandler implements IDbHandler {
 			// e.printStackTrace();
 			e.printStackTrace();
 		}
+
 		return false;
 	}
 
 	public Application getApp(String appId) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		Application app = null;
 		try {
 			getApp.setString(1, appId);
@@ -119,6 +148,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public ArrayList<Application> getApps() {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		ArrayList<Application> apps = new ArrayList<Application>();
 		try {
 			ResultSet rs = getApps.executeQuery();
@@ -138,7 +175,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean createSensor(Sensor sensor) {
-		sensorToJson(sensor);
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		try {
 			createSensor.setString(1, sensor.getAppId());
 			createSensor.setString(2, sensor.getSensorId());
@@ -154,6 +198,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public Sensor getSensor(String sensorId) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		Sensor sensor = null;
 		try {
 			getSensor.setString(1, sensorId);
@@ -175,6 +227,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public ArrayList<Sensor> getSensors(String appId) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		ArrayList<Sensor> sensors = new ArrayList<Sensor>();
 		try {
 			getSensors.setString(1, appId);
@@ -197,6 +257,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean createMetric(Metric metric) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		metricToJson(metric);
 		try {
 			createMetric.setString(1, metric.getAppId());
@@ -213,6 +281,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public ArrayList<Metric> getMetrics(String sensorId) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		Metric metric = null;
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
 		try {
@@ -238,8 +314,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean insertMeasurement(Metric metric) {
-		metricToJson(metric);
-
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		try {
 			insertMeasurement.setString(1, metric.getMetricId());
 			insertMeasurement.setString(2, metric.getValue());
@@ -253,6 +335,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean insertMeasurements(ArrayList<Metric> metrics) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		PreparedStatement stmt;
 		String batch = "INSERT INTO Measurements ( metricId, value, timestamp) VALUES (?, ?, ?)";
 		String values = ", (?, ?, ?)";
@@ -281,6 +371,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		ArrayList<Metric> metrics = new ArrayList<Metric>();
 		try {
 			getMeasurements.setString(1, metricId);
@@ -299,11 +397,20 @@ public class MySqlDbHandler implements IDbHandler {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
 		}
 		return metrics;
 	}
 
 	public boolean deleteRow(String table, String pkName, String id) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		String delete = "DELETE FROM " + table + " WHERE " + pkName + " = '" + id + "';";
 		try {
 			stmt.executeUpdate(delete);
@@ -316,6 +423,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean updateField(String table, String pkName, String id, String fieldName, String newValue) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		String update = "UPDATE " + table + " SET " + fieldName + " = '" + newValue + "' WHERE " + pkName + " = '" + id
 				+ "';";
 		try {
@@ -329,6 +444,14 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public boolean execStmnt(String query) {
+		try {
+			if (!conn.isValid(timeout)) {
+				connectToDb(host, port, dbname, user, password);
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		@SuppressWarnings("unused")
 		ResultSet rs;
 		try {
@@ -344,32 +467,47 @@ public class MySqlDbHandler implements IDbHandler {
 	public void connectToDb(String host, String port, String db, String user, String pass) {
 		// JDBC driver name and database URL
 		final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
-		// final String DB_URL = "jdbc:mysql://localhost/ADE";
-		// String DB_URL = "jdbc:mysql://" + host + ":" + port + "/" + db +
-		// "?useSSL=false";
-		String DB_URL = "jdbc:mysql://" + host + ":" + port + "/" + db;
+		String DB_URL = "jdbc:mysql://" + host + ":" + port + "/" + db
+				+ "?verifyServerCertificate=false&useSSL=false&requireSSL=false&autoReconnect=true&failOverReadOnly=false&maxReconnects=1&serverTimezone=UTC";
 
 		if (pass.compareTo("\"\"") == 0) {
 			pass = null;
 		}
+		// if (connPool == null) {
+		// connPool = new ConnectionPool();
+		// try {
+		// dataSource = connPool.setUp(JDBC_DRIVER, DB_URL, user, pass);
+		// } catch (Exception e1) {
+		// // TODO Auto-generated catch block
+		// e1.printStackTrace();
+		// }
+		// // System.out.println("Connection pool created!");
+		// }
+		//
+		// try {
+		// conn = dataSource.getConnection();
+		// stmt = conn.createStatement();
+		// } catch (SQLException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 
-		// STEP 2: Register JDBC driver
-		try {
-			Class.forName(JDBC_DRIVER);
-			// System.out.println("Connecting to a selected database...");
-			DriverManager.setLoginTimeout(5);
-			conn = DriverManager.getConnection(DB_URL, user, pass);
-			// System.out.println("Connected database successfully...");
-			stmt = conn.createStatement();
-
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (conn == null) {
+			try {
+				Class.forName(JDBC_DRIVER);
+				// System.out.println("Connecting to a selected database...");
+				DriverManager.setLoginTimeout(-1);
+				conn = DriverManager.getConnection(DB_URL, user, pass);
+				System.out.println("Connected database successfully...");
+				stmt = conn.createStatement();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	public boolean closeConnection() {
@@ -381,7 +519,7 @@ public class MySqlDbHandler implements IDbHandler {
 				stmt.close();
 			if (conn != null)
 				conn.close();
-			System.out.println("Goodbye!");
+			// System.out.println("Goodbye!");
 			return true;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -398,38 +536,45 @@ public class MySqlDbHandler implements IDbHandler {
 	}
 
 	public void readProperties() {
-		try {
-			@SuppressWarnings("resource")
-			BufferedReader bf = new BufferedReader(new FileReader("src/main/resources/iot.properties"));
-			String line = null;
-			while ((line = bf.readLine()) != null) {
-				String[] parts = line.split("=");
-				if (parts[1] == null) {
-					System.out.println("Missing properties!");
-				} else {
-					if (parts[0].compareTo("db.host") == 0) {
-						host = parts[1];
-					} else if (parts[0].compareTo("db.user") == 0) {
-						user = parts[1];
-					} else if (parts[0].compareTo("db.password") == 0) {
-						password = parts[1];
-					} else if (parts[0].compareTo("db.port") == 0) {
-						port = parts[1];
-					} else if (parts[0].compareTo("db.name") == 0) {
-						dbname = parts[1];
-					} else {
-						System.out.println("Wrong properties!");
-					}
 
-				}
+		Properties prop = new Properties();
+		InputStream input = null;
+
+		try {
+
+			String filename = "iot.properties";
+			input = MySqlDbHandler.class.getClassLoader().getResourceAsStream(filename);
+			if (input == null) {
+				System.out.println("Sorry, unable to find " + filename);
+				return;
 			}
 
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// load a properties file from class path, inside method
+			prop.load(input);
+
+			// get the property value and print it out
+			// System.out.println(prop.getProperty("db.host"));
+			// System.out.println(prop.getProperty("db.user"));
+			// System.out.println(prop.getProperty("db.password"));
+			// System.out.println(prop.getProperty("db.port"));
+			// System.out.println(prop.getProperty("db.name"));
+
+			host = prop.getProperty("db.host");
+			user = prop.getProperty("db.user");
+			password = prop.getProperty("db.password");
+			port = prop.getProperty("db.port");
+			dbname = prop.getProperty("db.name");
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -445,6 +590,5 @@ public class MySqlDbHandler implements IDbHandler {
 	public String metricToJson(Metric metric) {
 		return gson.toJson(metric);
 	}
-
 
 }

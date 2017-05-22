@@ -30,16 +30,18 @@ public class Metric implements IMetric {
 		return appId;
 	}
 
-	public void setAppId(String appId) {
+	public boolean setAppId(String appId) {
 		this.appId = appId;
+		return true;
 	}
 
 	public String getSensorId() {
 		return sensorId;
 	}
 
-	public void setSensorId(String sensorId) {
+	public boolean setSensorId(String sensorId) {
 		this.sensorId = sensorId;
+		return true;
 	}
 
 	public String getMetricId() {
@@ -54,31 +56,35 @@ public class Metric implements IMetric {
 		return typeOfData;
 	}
 
-	public void setTypeOfData(String typeOfData) {
+	public boolean setTypeOfData(String typeOfData) {
 		this.typeOfData = typeOfData;
+		return true;
 	}
 
 	public String getmUnit() {
 		return mUnit;
 	}
 
-	public void setmUnit(String mUnit) {
+	public boolean setmUnit(String mUnit) {
 		this.mUnit = mUnit;
+		return true;
 	}
 
 	public String getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public boolean setValue(String value) {
 		this.value = value;
+		return true;
 	}
 
 	public long getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(long timestamp) {
+	public boolean setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+		return true;
 	}
 }

@@ -28,17 +28,16 @@ public interface IDbHandler {
 
 	public boolean insertMeasurements(ArrayList<Metric> metric);
 
+	// Gets Measurement for a specific metric given two timestamps
 	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2);
 
+	// Creates connection to database
 	public void connectToDb(String host, String port, String db, String user, String pass);
 
 	public boolean closeConnection();
 
+	// Reads properties ex(db.host=localhost db.user=username
+	// db.password=password db.port=3306 db.name=DBNAME db.name=ADE)
 	public void readProperties();
 
-	public String appToJson(Application app);
-
-	public String sensorToJson(Sensor sensor);
-
-	public String metricToJson(Metric metric);
 }

@@ -12,45 +12,40 @@ public class Application implements IApplication {
 	public Application(String appId, String name, String desc) {
 		this.appName = name;
 		this.appDesc = desc;
-		if (appId == null) {
-			this.appId = generateUuid();
-		} else {
-			// try {
-			// UUID uuid = UUID.fromString(appId);
-			// this.appId = uuid.toString();
-			// // do something
-			// } catch (IllegalArgumentException exception) {
-			// // handle the case where string is not valid UUID
-			// this.appId = generateUuid();
-			// }
-			this.appId = appId;
-		}
-	}
+		// if (appId == null) {
+		// this.appId = generateUuid();
+		// } else {
+		// this.appId = appId;
+		// }
 
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("************************************");
-		sb.append("\nappId: ").append(this.appId);
-		sb.append("\nappName: ").append(this.appName);
-		sb.append("\nappDesc: ").append(this.appDesc);
-		sb.append("\n************************************");
-		return sb.toString();
+		try {
+			// UUID uuid = UUID.fromString(appId);
+			// appId = uuid.toString();
+			this.appId = appId;
+			// do something
+		} catch (IllegalArgumentException exception) {
+			// handle the case where string is not valid UUID
+			this.appId = generateUuid();
+		}
+
 	}
 
 	public String getName() {
 		return appName;
 	}
 
-	public void setName(String name) {
+	public boolean setName(String name) {
 		this.appName = name;
+		return true;
 	}
 
 	public String getDesc() {
 		return appDesc;
 	}
 
-	public void setDesc(String desc) {
+	public boolean setDesc(String desc) {
 		this.appDesc = desc;
+		return true;
 	}
 
 	public String getAppId() {

@@ -22,8 +22,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 
-import myservice.mynamespace.data.Storage;
-
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
@@ -50,6 +48,8 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.UriResourceProperty;
 
+import myservice.mynamespace.data.Storage;
+
 public class DemoPrimitiveProcessor implements PrimitiveProcessor {
 
 	private OData odata;
@@ -74,7 +74,7 @@ public class DemoPrimitiveProcessor implements PrimitiveProcessor {
 	 */
 	public void readPrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
 			throws ODataApplicationException, SerializerException {
-		System.out.println("Read Premitive");
+		//System.out.println("Read Premitive");
 		// 1. Retrieve info from URI
 		// 1.1. retrieve the info about the requested entity set
 		List<UriResource> resourceParts = uriInfo.getUriResourceParts();
@@ -139,14 +139,14 @@ public class DemoPrimitiveProcessor implements PrimitiveProcessor {
 	public void updatePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo,
 			ContentType requestFormat, ContentType responseFormat)
 			throws ODataApplicationException, DeserializerException, SerializerException {
-		System.out.println("Update primitive");
+		//System.out.println("Update primitive");
 		throw new ODataApplicationException("Not supported.", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(),
 				Locale.ROOT);
 	}
 
 	public void deletePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo)
 			throws ODataApplicationException {
-		System.out.println("delete primitive");
+		//System.out.println("delete primitive");
 		throw new ODataApplicationException("Not supported.", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(),
 				Locale.ROOT);
 	}

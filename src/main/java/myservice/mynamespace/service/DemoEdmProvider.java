@@ -88,7 +88,7 @@ public class DemoEdmProvider extends CsdlAbstractEdmProvider {
 
 			return entityType;
 		} else if (ET_APPLICATION_FQN.equals(entityTypeName)) {
-			System.out.println("get entity type Application");
+			//System.out.println("get entity type Application");
 			// create EntityType properties
 			CsdlProperty id = new CsdlProperty().setName("appId")
 					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
@@ -109,7 +109,7 @@ public class DemoEdmProvider extends CsdlAbstractEdmProvider {
 
 			return entityType;
 		} else if (ET_SENSOR_FQN.equals(entityTypeName)) {
-			System.out.println("get entity type Sensor");
+			//System.out.println("get entity type Sensor");
 			// create EntityType properties
 			CsdlProperty appId = new CsdlProperty().setName("appId")
 					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
@@ -132,7 +132,7 @@ public class DemoEdmProvider extends CsdlAbstractEdmProvider {
 
 			return entityType;
 		} else if (ET_METRIC_FQN.equals(entityTypeName)) {
-			System.out.println("get entity type Metric");
+			//System.out.println("get entity type Metric");
 			// create EntityType properties
 			CsdlProperty appId = new CsdlProperty().setName("appId")
 					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
@@ -160,7 +160,7 @@ public class DemoEdmProvider extends CsdlAbstractEdmProvider {
 
 			return entityType;
 		} else if (ET_MEASUREMENT_FQN.equals(entityTypeName)) {
-			System.out.println("get entity type Measurement");
+			//System.out.println("get entity type Measurement");
 			// create EntityType properties
 			CsdlProperty appId = new CsdlProperty().setName("appId")
 					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
@@ -188,14 +188,13 @@ public class DemoEdmProvider extends CsdlAbstractEdmProvider {
 
 			return entityType;
 		}
-
 		return null;
 
 	}
 
 	@Override
 	public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) {
-		System.out.println("Get entity set");
+		//System.out.println("Get entity set");
 		if (entityContainer.equals(CONTAINER)) {
 			if (entitySetName.equals(ES_PRODUCTS_NAME)) {
 				CsdlEntitySet entitySet = new CsdlEntitySet();

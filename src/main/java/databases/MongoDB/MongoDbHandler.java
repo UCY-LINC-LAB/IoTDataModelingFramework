@@ -1,11 +1,15 @@
 package databases.MongoDB;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.lte;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.bson.Document;
 
@@ -14,41 +18,47 @@ import com.google.gson.GsonBuilder;
 import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import static com.mongodb.client.model.Filters.*;
 
 import Interface.IDbHandler;
 import beans.Application;
 import beans.Metric;
 import beans.Sensor;
+import databases.MySQL.MySqlDbHandler;
 
 public class MongoDbHandler implements IDbHandler {
 
-	MongoClient mongoClient;
-	MongoDatabase database;
-	MongoCollection<Document> appsCollection;
-	MongoCollection<Document> sensorsCollection;
-	MongoCollection<Document> metricsCollection;
-	MongoCollection<Document> measurementsCollection;
+	private static MongoClient mongoClient;
+	private static MongoDatabase database;
+	private MongoCollection<Document> appsCollection;
+	private MongoCollection<Document> sensorsCollection;
+	private MongoCollection<Document> metricsCollection;
+	private MongoCollection<Document> measurementsCollection;
 
 	private static String host;
 	private static String dbname;
 	private static String port;
 	private static String user;
 	private static String password;
-	private static GsonBuilder builder = new GsonBuilder();
-	private static Gson gson = builder.create();
+	private GsonBuilder builder = new GsonBuilder();
+	private Gson gson = builder.create();
 
 	public MongoDbHandler() {
-		readProperties();
-		connectToDb(host, port, dbname, user, password);
-		appsCollection = database.getCollection("Applications");
-		sensorsCollection = database.getCollection("Sensors");
-		metricsCollection = database.getCollection("Metrics");
-		measurementsCollection = database.getCollection("Measurements");
+		if (host == null) {
+			readProperties();
+		}
+		if (mongoClient == null) {
+			connectToDb(host, port, dbname, user, password);
+
+		}
+		if (appsCollection == null) {
+			appsCollection = database.getCollection("Applications");
+			sensorsCollection = database.getCollection("Sensors");
+			metricsCollection = database.getCollection("Metrics");
+			measurementsCollection = database.getCollection("Measurements");
+		}
 
 	}
 
@@ -172,36 +182,41 @@ public class MongoDbHandler implements IDbHandler {
 
 	public ArrayList<Metric> getMeasurementsMetricFromTo(String metricId, long date1, long date2) {
 		// TODO Auto-generated method stub
-		final ArrayList<Metric> metrics = new ArrayList<Metric>();
-		// now use a range query to get a larger subset
+		ArrayList<Metric> metrics = new ArrayList<Metric>();
 		Block<Document> printBlock = new Block<Document>() {
 			public void apply(final Document doc) {
 				Metric metric = new Metric(doc.getString("appId"), doc.getString("sensorId"), doc.getString("metricId"),
 						doc.getString("typeOfData"), doc.getString("mUnit"), doc.getString("value"),
 						doc.getLong("timestamp"));
-				metricToJson(metric);
 				metrics.add(metric);
 			}
 		};
-		if (date1 > date2) {
-			measurementsCollection.find(and(gt("timestamp", date2), lte("timestamp", date1))).forEach(printBlock);
+		if (date1 >= date2) {
+			measurementsCollection.find(and(eq("metricId", metricId), gt("timestamp", 0), lte("timestamp", 99999)))
+					.forEach(printBlock);
 		}
-		if (date1 < date2) {
-			measurementsCollection.find(and(gt("timestamp", date1), lte("timestamp", date2))).forEach(printBlock);
+		if (date1 <= date2) {
+			measurementsCollection.find(and(gt("timestamp", date1), lte("timestamp", date2)));
 		}
-		// for (int i = 0; i < metrics.size(); i++) {
-		// System.out.println(metricToJson(metrics.get(i)));
-		// }
 
 		return metrics;
 	}
 
 	public void connectToDb(String host, String port, String db, String user, String pass) {
-		MongoClientOptions.Builder options = MongoClientOptions.builder();
-		options.socketKeepAlive(true);
-		String url = "mongodb://" + user + ":" + pass + "@" + host + ":" + port + "/?authSource=admin";
-		MongoClientURI uri = new MongoClientURI(url);
-		mongoClient = new MongoClient(uri);
+
+		// if ((user != null) || (user != "")) {
+		// MongoClientOptions.Builder options = MongoClientOptions.builder();
+		// options.socketKeepAlive(true);
+		// String url = "mongodb://" + user + ":" + pass + "@" + host + ":" +
+		// port + "/?authSource=admin";
+		// MongoClientURI uri = new MongoClientURI(url);
+		// this.mongoClient = new MongoClient(uri);
+		// this.database = mongoClient.getDatabase(db);
+		// }
+
+		MongoClientOptions options = MongoClientOptions.builder().threadsAllowedToBlockForConnectionMultiplier(100)
+				.connectTimeout(100).socketKeepAlive(true).connectionsPerHost(100).build();
+		mongoClient = new MongoClient(host, options);
 		database = mongoClient.getDatabase(db);
 
 	}
@@ -213,38 +228,45 @@ public class MongoDbHandler implements IDbHandler {
 	}
 
 	public void readProperties() {
-		try {
-			@SuppressWarnings("resource")
-			BufferedReader bf = new BufferedReader(new FileReader("src/main/resources/iot.properties"));
-			String line = null;
-			while ((line = bf.readLine()) != null) {
-				String[] parts = line.split("=");
-				if (parts[1] == null) {
-					System.out.println("Missing properties!");
-				} else {
-					if (parts[0].compareTo("db.host") == 0) {
-						host = parts[1];
-					} else if (parts[0].compareTo("db.user") == 0) {
-						user = parts[1];
-					} else if (parts[0].compareTo("db.password") == 0) {
-						password = parts[1];
-					} else if (parts[0].compareTo("db.port") == 0) {
-						port = parts[1];
-					} else if (parts[0].compareTo("db.name") == 0) {
-						dbname = parts[1];
-					} else {
-						System.out.println("Wrong properties!");
-					}
 
-				}
+		Properties prop = new Properties();
+		InputStream input = null;
+
+		try {
+
+			String filename = "iot.properties";
+			input = MySqlDbHandler.class.getClassLoader().getResourceAsStream(filename);
+			if (input == null) {
+				System.out.println("Sorry, unable to find " + filename);
+				return;
 			}
 
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// load a properties file from class path, inside static method
+			prop.load(input);
+
+			// get the property value and print it out
+			System.out.println(prop.getProperty("db.host"));
+			System.out.println(prop.getProperty("db.user"));
+			System.out.println(prop.getProperty("db.password"));
+			System.out.println(prop.getProperty("db.port"));
+			System.out.println(prop.getProperty("db.name"));
+
+			host = prop.getProperty("db.host");
+			user = prop.getProperty("db.user");
+			password = prop.getProperty("db.password");
+			port = prop.getProperty("db.port");
+			dbname = prop.getProperty("db.name");
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
