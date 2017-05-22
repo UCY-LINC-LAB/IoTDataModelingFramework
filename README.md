@@ -2,7 +2,7 @@
 ----
 
 ## Usage 1
-1. Generate IoTDataModelingFramework.war
+1. Generate IoTDataModelingFramework.war with maven clean install
 2. Deploy IoTDataModelingFramework.war file in /opt/tomcat/webapps (tomcat version 8)
 3. Execute $ sudo service tomcat restart
 4. The webapp is accessible from http://localhost:8080/IoTDataModelingFramework/DemoService.svc/
@@ -24,7 +24,7 @@
 
 
 ## Usage 2
-1. Generate IoTDataModelingFramework-jar-with-dependencies.jar
+1. Generate IoTDataModelingFramework-jar-with-dependencies.jar with mvn clean compile assembly:single
 2. Run with java -jar IoTDataModelingFramework-jar-with-dependencies.jar
 3. Arguments:
       1. Number of sensors that sends measurements (>0)
@@ -33,12 +33,4 @@
       4. Immediate start (0,1)
       5. Logs location (String)
       6. Name of the logs (String)
-
-
-
-
-
-
-
-2. Generate IoTDataModelingFramework-jar-with-dependencies.jar
 
